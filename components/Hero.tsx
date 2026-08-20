@@ -31,10 +31,7 @@ export default function Hero() {
         </a>
       </div>
       <p className="max-w-xl text-gray-600 dark:text-gray-400">
-        Software Engineer at Panoramix Financial in New York City, building AI-powered
-        financial tooling. Union College &apos;24, double major in Computer Science and
-        Mathematics. Outside the day job, I build and ship my own apps end-to-end
-        &mdash; I&apos;d rather create something than wait for permission.
+        Software Engineer at Panoramix Financial in New York City. Boston sports fan. Chess player. App builder.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-4">
         <Link
