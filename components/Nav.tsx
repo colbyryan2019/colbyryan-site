@@ -4,10 +4,11 @@ import { contact } from '@/lib/content'
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
+  { href: '/games', label: 'Games' },
+  { href: '/projects', label: 'Projects' },
   { href: '/experience', label: 'Experience' },
   { href: '/education', label: 'Education' },
-  { href: '/projects', label: 'Projects' },
+  { href: '/about', label: 'About' },
 ]
 
 export default function Nav() {

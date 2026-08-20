@@ -35,16 +35,25 @@ export default function Hero() {
       </p>
       <div className="flex flex-wrap items-center justify-center gap-4">
         <Link
-          href="/about"
-          className="rounded-full border border-accent px-5 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-gray-950"
-        >
-          About Me
-        </Link>
-        <Link
           href="/projects"
-          className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent dark:border-gray-700"
+          className="rounded-full border border-accent bg-accent px-8 py-3 text-base font-semibold text-gray-950 transition-colors hover:bg-transparent hover:text-accent"
         >
           View Projects
+        </Link>
+        <Link
+          href="/experience"
+          className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
+        >
+          Experience
+        </Link>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+        <Link href="/education" className="transition-colors hover:text-accent">
+          Education
+        </Link>
+        <span>·</span>
+        <Link href="/about" className="transition-colors hover:text-accent">
+          About
         </Link>
       </div>
     </section>

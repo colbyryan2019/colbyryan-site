@@ -13,6 +13,7 @@ describe('Nav', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Games' })).toHaveAttribute('href', '/games')
     expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about')
     expect(screen.getByRole('link', { name: 'Experience' })).toHaveAttribute('href', '/experience')
     expect(screen.getByRole('link', { name: 'Education' })).toHaveAttribute('href', '/education')

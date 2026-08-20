@@ -13,7 +13,9 @@ describe('Hero', () => {
       'href',
       `mailto:${contact.email}`,
     )
-    expect(screen.getByRole('link', { name: 'About Me' })).toHaveAttribute('href', '/about')
     expect(screen.getByRole('link', { name: 'View Projects' })).toHaveAttribute('href', '/projects')
+    expect(screen.getByRole('link', { name: 'Experience' })).toHaveAttribute('href', '/experience')
+    expect(screen.getByRole('link', { name: 'Education' })).toHaveAttribute('href', '/education')
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about')
   })
 })
