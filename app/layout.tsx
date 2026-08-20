@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     template: '%s · Colby Ryan',
   },
   description,
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Colby Ryan — Software Engineer',
     description,

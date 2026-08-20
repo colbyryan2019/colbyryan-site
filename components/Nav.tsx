@@ -14,10 +14,10 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
       <nav className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-        <Link href="/" className="font-semibold tracking-wide">
+        <Link href="/" className="hidden font-semibold tracking-wide sm:block">
           {contact.name.toUpperCase()}
         </Link>
-        <ul className="flex items-center gap-6 text-sm">
+        <ul className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm sm:gap-6">
           {links.map((link) => (
             <li key={link.href}>
               <Link href={link.href} className="transition-colors hover:text-accent">
@@ -25,6 +25,11 @@ export default function Nav() {
               </Link>
             </li>
           ))}
+          <li>
+            <a href={contact.resumeHref} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
+              Resume
+            </a>
+          </li>
           <li>
             <ThemeToggle />
           </li>

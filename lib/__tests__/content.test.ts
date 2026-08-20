@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { contact, experience, education, projects } from '../content'
 
 describe('content data', () => {
@@ -34,5 +36,20 @@ describe('content data', () => {
     }
     expect(projects[2].href).toBe('/theses/Math%20Thesis.pdf')
     expect(projects[3].href).toBe('/theses/Computer%20Science%20Thesis.pdf')
+  })
+
+  it('every local asset path resolves to a real file in public/', () => {
+    const localPaths = [
+      contact.resumeHref,
+      ...experience.map((e) => e.logo),
+      ...education.map((e) => e.logo),
+      ...projects.map((p) => p.href),
+      '/images/headshot.jpg',
+    ].filter((href): href is string => !!href && href.startsWith('/'))
+
+    for (const href of localPaths) {
+      const filePath = path.join(process.cwd(), 'public', decodeURIComponent(href))
+      expect(existsSync(filePath), href).toBe(true)
+    }
   })
 })

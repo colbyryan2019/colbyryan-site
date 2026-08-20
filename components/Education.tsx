@@ -17,9 +17,9 @@ export default function Education() {
                   <Image
                     src={entry.logo}
                     alt={`${entry.school} logo`}
-                    width={40}
+                    width={80}
                     height={40}
-                    className="rounded"
+                    className="h-10 w-auto rounded object-contain"
                   />
                 )}
                 <div>

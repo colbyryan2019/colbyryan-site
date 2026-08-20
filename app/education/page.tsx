@@ -4,6 +4,7 @@ import Education from '@/components/Education'
 export const metadata: Metadata = {
   title: 'Education',
   description: 'Education: Union College (B.S. Computer Science & Mathematics) and TEFL Iberia.',
+  alternates: { canonical: '/education' },
 }
 
 export default function EducationPage() {

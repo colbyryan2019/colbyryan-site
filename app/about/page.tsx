@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'About',
   description:
     "Software Engineer at Panoramix Financial in New York City, Union College '24 grad in Computer Science and Mathematics.",
+  alternates: { canonical: '/about' },
 }
 
 export default function AboutPage() {

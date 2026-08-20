@@ -11,6 +11,7 @@ describe('Projects', () => {
       expect(screen.getByRole('heading', { name: project.title })).toBeInTheDocument()
       const links = screen.getAllByRole('link', { name: `${project.linkLabel} →` })
       const link = links.find((l) => l.getAttribute('href') === project.href)
+      expect(link).toBeDefined()
       expect(link).toHaveAttribute('href', project.href)
     }
   })

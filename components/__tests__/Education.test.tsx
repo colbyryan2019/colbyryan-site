@@ -10,6 +10,8 @@ describe('Education', () => {
     for (const entry of education) {
       expect(screen.getByRole('heading', { name: entry.school })).toBeInTheDocument()
       expect(screen.getByText(entry.dates)).toBeInTheDocument()
+      const credentialRegex = new RegExp(entry.credential.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      expect(screen.getByText(credentialRegex)).toBeInTheDocument()
     }
   })
 })

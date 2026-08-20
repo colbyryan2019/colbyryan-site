@@ -4,6 +4,7 @@ import Experience from '@/components/Experience'
 export const metadata: Metadata = {
   title: 'Experience',
   description: 'Work experience: Panoramix Financial, PanAgora Asset Management, TandemAI.',
+  alternates: { canonical: '/experience' },
 }
 
 export default function ExperiencePage() {

@@ -15,9 +15,10 @@ Open http://localhost:3000.
 
 ```bash
 npm test
+npm run lint
 ```
 
-Runs the Vitest + React Testing Library component suite.
+`npm test` runs the Vitest + React Testing Library component suite. `npm run lint` runs ESLint.
 
 ## Building
 

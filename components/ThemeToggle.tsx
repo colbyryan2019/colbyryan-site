@@ -13,7 +13,12 @@ export default function ThemeToggle() {
   }, [])
 
   if (!mounted) {
-    return <button aria-label="Toggle theme" className="h-9 w-9" />
+    return (
+      <button
+        aria-label="Toggle theme"
+        className="h-9 w-9 rounded-full border border-gray-300 dark:border-gray-700"
+      />
+    )
   }
 
   const isDark = theme === 'dark'
