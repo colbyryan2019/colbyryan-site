@@ -4,6 +4,7 @@
 
 @theme {
   --color-accent: #38bdf8;
+  --font-sans: var(--font-inter);
 }
 
 html {
