@@ -8,6 +8,7 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- next-themes hydration guard: must set after mount to avoid SSR/client theme mismatch
     setMounted(true)
   }, [])
 
