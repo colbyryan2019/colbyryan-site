@@ -31,3 +31,34 @@ body {
     animation: fade-in-up 0.6s ease-out both;
   }
 }
+
+@keyframes bubble-float {
+  from {
+    bottom: -10%;
+  }
+  to {
+    bottom: 110%;
+  }
+}
+
+.bubble-float {
+  animation-name: bubble-float;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+@keyframes letter-fall {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -220%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.letter-fall {
+  animation: letter-fall 0.4s ease-in both;
+}

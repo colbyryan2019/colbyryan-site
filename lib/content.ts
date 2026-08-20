@@ -97,6 +97,20 @@ export const education: EducationEntry[] = [
   },
 ]
 
+export interface GameEntry {
+  title: string
+  description: string
+  href: string
+}
+
+export const games: GameEntry[] = [
+  {
+    title: 'Bubble Pop',
+    description: 'Pop the rising bubbles in the right order before they float away.',
+    href: '/games/bubble-pop',
+  },
+]
+
 export interface ProjectEntry {
   title: string
   description: string
