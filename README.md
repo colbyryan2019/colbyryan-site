@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# colbyryan.com
 
-## Getting Started
+Colby Ryan's personal site — Next.js (App Router) + TypeScript + Tailwind CSS.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+Runs the Vitest + React Testing Library component suite.
 
-To learn more about Next.js, take a look at the following resources:
+## Building
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying to Vercel
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push this repo to GitHub (already connected to `colbyryan2019/colbyryan-site`).
+2. In the [Vercel dashboard](https://vercel.com/new), import the repo — Vercel auto-detects
+   Next.js, no config needed.
+3. After the first deploy, go to the project's **Settings → Domains** and add
+   `colbyryan.com` (and `www.colbyryan.com` if desired).
+4. Vercel shows the DNS records to add at your domain registrar — typically an `A` record
+   for the apex domain and a `CNAME` for `www`. Add them there; Vercel issues an SSL
+   certificate automatically once DNS propagates.
+5. Every push to `main` redeploys to production automatically.
