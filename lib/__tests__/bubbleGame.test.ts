@@ -72,8 +72,19 @@ describe('bubbleGame', () => {
 
     const next = popBubble(state, 1, 'C', 10)
 
-    expect(next.collected).toEqual([{ letter: 'C', x: 10 }])
+    expect(next.collected).toEqual([{ id: 1, letter: 'C', x: 10 }])
     expect(next.bubbles).toEqual([{ id: 2, x: 20, letter: 'O' }])
+    expect(next.finished).toBe(false)
+  })
+
+  it('is idempotent per bubble id, so a repeated pop (e.g. pointerdown firing it, then a keyboard-triggered click firing it again) does not double-collect the letter', () => {
+    let state = createInitialState(['C', 'O'])
+    state = withBubbles(state, [{ id: 1, x: 10, letter: 'C' }])
+    state = popBubble(state, 1, 'C', 10)
+
+    const next = popBubble(state, 1, 'C', 10)
+
+    expect(next.collected).toEqual([{ id: 1, letter: 'C', x: 10 }])
     expect(next.finished).toBe(false)
   })
 
@@ -86,8 +97,8 @@ describe('bubbleGame', () => {
     const next = popBubble(state, 2, 'O', 60)
 
     expect(next.collected).toEqual([
-      { letter: 'C', x: 10 },
-      { letter: 'O', x: 60 },
+      { id: 1, letter: 'C', x: 10 },
+      { id: 2, letter: 'O', x: 60 },
     ])
     expect(next.finished).toBe(true)
     expect(next.won).toBe(true)
@@ -134,7 +145,7 @@ describe('bubbleGame', () => {
 
     const next = popBubble(state, 1, 'C', 33)
 
-    expect(next.collected).toEqual([{ letter: 'C', x: 33 }])
+    expect(next.collected).toEqual([{ id: 1, letter: 'C', x: 33 }])
     expect(next.finished).toBe(true)
   })
 

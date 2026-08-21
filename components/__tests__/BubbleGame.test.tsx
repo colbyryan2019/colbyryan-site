@@ -70,6 +70,21 @@ describe('BubbleGame', () => {
     expect(screen.getByRole('button', { name: 'Pop bubble O' })).toBeInTheDocument()
   })
 
+  it('pops a bubble on pointerdown alone, without needing a matching click (fixes missed pops on a continuously-swaying bubble)', () => {
+    render(<BubbleGame />)
+
+    act(() => {
+      vi.advanceTimersByTime(1200)
+    })
+    const [bubble] = screen.getAllByRole('button', { name: /^Pop bubble /i })
+    const letter = bubble.getAttribute('aria-label')?.replace('Pop bubble ', '')
+
+    fireEvent.pointerDown(bubble, { button: 0, clientY: 100 })
+
+    expect(bubble).not.toBeInTheDocument()
+    expect(screen.getByText(letter as string)).toBeInTheDocument()
+  })
+
   it('letters can pop in any order, not just sequence order', () => {
     render(<BubbleGame />)
 
@@ -84,14 +99,14 @@ describe('BubbleGame', () => {
     expect(screen.getByText(firstLetter as string)).toBeInTheDocument()
   })
 
-  it('shows the title, a win message, and lets the player play again after spelling COLBY left-to-right', () => {
+  it('shows the spelled word as the result heading, celebrates a win, and lets the player play again after spelling COLBY left-to-right', () => {
     mockDeterministicLetterOrder('increasing')
     render(<BubbleGame />)
 
     for (const letter of ['C', 'O', 'L', 'B', 'Y']) popRound(letter)
 
-    expect(screen.getByRole('heading', { name: 'Bubble Pop' })).toBeInTheDocument()
-    expect(screen.getByText('You spelled COLBY!')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'COLBY' })).toBeInTheDocument()
+    expect(screen.getByText('Try again?')).toBeInTheDocument()
     expect(document.querySelectorAll('.firework-particle').length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('button', { name: 'Play Again' }))
@@ -100,7 +115,7 @@ describe('BubbleGame', () => {
       vi.advanceTimersByTime(1200)
     })
     expect(screen.getByRole('button', { name: 'Pop bubble C' })).toBeInTheDocument()
-    expect(screen.queryByText('You spelled COLBY!')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'COLBY' })).not.toBeInTheDocument()
   })
 
   it('shows the scrambled result instead of a win, without ever revealing the target word, when letters are popped out of left-to-right order', () => {
@@ -109,16 +124,25 @@ describe('BubbleGame', () => {
 
     for (const letter of ['C', 'O', 'L', 'B', 'Y']) popRound(letter)
 
-    expect(screen.queryByText('You spelled COLBY!')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'COLBY' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading')).toBeInTheDocument()
+    expect(screen.getByText('Try again?')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Play Again' })).toBeInTheDocument()
     expect(document.body.textContent).not.toMatch(/COLBY/)
     expect(document.querySelectorAll('.firework-particle').length).toBe(0)
   })
 
-  it('does not show the title while a round is actively being played', () => {
+  it('does not show a result heading while a round is actively being played', () => {
     render(<BubbleGame />)
 
-    expect(screen.queryByRole('heading', { name: 'Bubble Pop' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+  })
+
+  it('always shows a back link to the games hub', () => {
+    render(<BubbleGame />)
+
+    const back = screen.getByRole('link', { name: /back/i })
+    expect(back).toHaveAttribute('href', '/')
   })
 
   it('never hints the target word before the player has spelled it', () => {

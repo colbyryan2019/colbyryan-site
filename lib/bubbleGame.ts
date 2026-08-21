@@ -5,6 +5,7 @@ export interface Bubble {
 }
 
 export interface CollectedLetter {
+  id: number
   letter: string
   x: number
 }
@@ -49,8 +50,13 @@ export function getResultWord(state: BubbleGameState): string {
 
 export function popBubble(state: BubbleGameState, id: number, letter: string, x: number): BubbleGameState {
   if (state.finished) return state
+  // A pop can be triggered twice for the same bubble (pointerdown fires it
+  // immediately for mouse/touch, onClick fires it again for keyboard
+  // activation) - this guard makes a repeat pop for an id a no-op instead of
+  // double-collecting the letter.
+  if (state.collected.some((entry) => entry.id === id)) return state
 
-  const collected = [...state.collected, { letter, x }]
+  const collected = [...state.collected, { id, letter, x }]
   const bubbles = state.bubbles.filter((bubble) => bubble.id !== id)
   const finished = collected.length >= state.sequence.length
   const next = { ...state, collected, bubbles, finished, won: false }

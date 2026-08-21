@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useReducer, type CSSProperties } from 'react'
+import { useEffect, useReducer, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import Link from 'next/link'
 import {
   createInitialState,
   expireBubble,
@@ -47,6 +48,24 @@ const FIREWORK_BURSTS = [
 const FIREWORK_COLORS = ['bg-accent', 'bg-pink-400', 'bg-yellow-300', 'bg-emerald-400']
 const FIREWORK_PARTICLES = 10
 
+const POP_BURST_PARTICLES = 6
+const POP_BURST_DURATION_MS = 380
+
+function PopBurst({ left, top }: { left: number; top: number }) {
+  return (
+    <div className="pointer-events-none absolute" style={{ left: `${left}%`, top: `${top}%` }}>
+      <span className="pop-burst-ring" />
+      {Array.from({ length: POP_BURST_PARTICLES }, (_, i) => (
+        <span
+          key={i}
+          style={{ '--angle': `${(360 / POP_BURST_PARTICLES) * i}deg` } as CSSProperties}
+          className="pop-burst-particle"
+        />
+      ))}
+    </div>
+  )
+}
+
 function Fireworks() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -72,6 +91,8 @@ function Fireworks() {
 
 export default function BubbleGame() {
   const [state, dispatch] = useReducer(reducer, undefined, init)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [bursts, setBursts] = useState<{ id: number; left: number; top: number }[]>([])
 
   useEffect(() => {
     if (state.finished) return
@@ -81,8 +102,27 @@ export default function BubbleGame() {
     return () => clearInterval(interval)
   }, [state.finished])
 
+  function popAt(bubble: BubbleGameState['bubbles'][number], clientY: number) {
+    dispatch({ type: 'pop', id: bubble.id, letter: bubble.letter, x: bubble.x })
+
+    const rect = containerRef.current?.getBoundingClientRect()
+    const top = rect && clientY > 0 ? ((clientY - rect.top) / rect.height) * 100 : 45
+    const burstId = bubble.id
+    setBursts((prev) => [...prev, { id: burstId, left: bubble.x, top }])
+    setTimeout(() => {
+      setBursts((prev) => prev.filter((burst) => burst.id !== burstId))
+    }, POP_BURST_DURATION_MS)
+  }
+
   return (
-    <div className="relative left-1/2 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-sky-50 to-sky-100 dark:border-gray-800 dark:from-gray-900 dark:to-gray-950">
+    <div ref={containerRef} className="relative left-1/2 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-sky-50 to-sky-100 dark:border-gray-800 dark:from-gray-900 dark:to-gray-950">
+      <Link
+        href="/"
+        className="absolute left-4 top-4 z-10 flex items-center gap-1 rounded-full border border-accent bg-white/70 px-3 py-1.5 text-sm font-medium text-accent backdrop-blur transition-colors hover:bg-accent hover:text-gray-950 dark:bg-gray-950/70"
+      >
+        ← Back
+      </Link>
+
       {state.bubbles.map((bubble) => (
         <div
           key={bubble.id}
@@ -100,13 +140,21 @@ export default function BubbleGame() {
             <button
               type="button"
               aria-label={`Pop bubble ${bubble.letter}`}
-              onClick={() => dispatch({ type: 'pop', id: bubble.id, letter: bubble.letter, x: bubble.x })}
+              onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+                if (event.button !== 0) return
+                popAt(bubble, event.clientY)
+              }}
+              onClick={(event) => popAt(bubble, event.clientY)}
               className="flex h-20 w-20 -translate-x-1/2 items-center justify-center rounded-full border border-accent bg-accent/20 text-2xl font-bold text-accent backdrop-blur transition-transform hover:scale-110"
             >
               {bubble.letter}
             </button>
           </div>
         </div>
+      ))}
+
+      {bursts.map((burst) => (
+        <PopBurst key={burst.id} left={burst.left} top={burst.top} />
       ))}
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 border-t border-gray-200 bg-white/70 dark:border-gray-800 dark:bg-gray-950/70">
@@ -124,12 +172,12 @@ export default function BubbleGame() {
       </div>
 
       {state.finished && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white/90 dark:bg-gray-950/90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 dark:bg-gray-950/90">
           {state.won && <Fireworks />}
-          <h1 className="relative text-3xl font-bold tracking-tight">Bubble Pop</h1>
-          <p className="relative max-w-sm text-center text-xl font-bold text-accent">
-            You spelled {getResultWord(state)}!
-          </p>
+          <h1 className="word-rise relative text-5xl font-bold tracking-tight text-accent sm:text-6xl">
+            {getResultWord(state)}
+          </h1>
+          <p className="relative text-sm text-gray-600 dark:text-gray-400">Try again?</p>
           <button
             type="button"
             onClick={() => dispatch({ type: 'reset' })}
