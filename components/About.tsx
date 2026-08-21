@@ -1,7 +1,7 @@
 export default function About() {
   return (
-    <section className="fade-in-section space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">About</h1>
+    <section id="about" className="fade-in-section space-y-6">
+      <h2 className="text-3xl font-bold tracking-tight">About</h2>
       <div className="space-y-4 text-gray-700 dark:text-gray-300">
         <p>
           Software Engineer at Panoramix Financial in New York City. Graduated Union

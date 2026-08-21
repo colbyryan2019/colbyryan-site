@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 export default function BubblePopPage() {
   return (
     <section className="fade-in-section space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Bubble Pop</h1>
       <BubbleGame />
     </section>
   )

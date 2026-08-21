@@ -3,8 +3,8 @@ import { education } from '@/lib/content'
 
 export default function Education() {
   return (
-    <section className="fade-in-section space-y-10">
-      <h1 className="text-3xl font-bold tracking-tight">Education</h1>
+    <section id="education" className="fade-in-section scroll-mt-24 space-y-10">
+      <h2 className="text-3xl font-bold tracking-tight">Education</h2>
       <ol className="space-y-10">
         {education.map((entry) => (
           <li
@@ -23,7 +23,7 @@ export default function Education() {
                   />
                 )}
                 <div>
-                  <h2 className="text-lg font-semibold">{entry.school}</h2>
+                  <h3 className="text-lg font-semibold">{entry.school}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {entry.credential} · {entry.location}
                   </p>

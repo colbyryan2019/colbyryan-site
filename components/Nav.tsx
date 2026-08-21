@@ -3,11 +3,7 @@ import ThemeToggle from './ThemeToggle'
 import { contact } from '@/lib/content'
 
 const links = [
-  { href: '/', label: 'Home' },
-  { href: '/games', label: 'Games' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/experience', label: 'Experience' },
-  { href: '/education', label: 'Education' },
+  { href: '/', label: 'Games' },
   { href: '/about', label: 'About' },
 ]
 

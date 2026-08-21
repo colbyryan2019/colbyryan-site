@@ -11,7 +11,7 @@ export interface CollectedLetter {
 
 export interface BubbleGameState {
   sequence: string[]
-  currentIndex: number
+  available: string[]
   bubbles: Bubble[]
   collected: CollectedLetter[]
   finished: boolean
@@ -22,7 +22,7 @@ export interface BubbleGameState {
 export function createInitialState(sequence: string[]): BubbleGameState {
   return {
     sequence,
-    currentIndex: 0,
+    available: [...sequence],
     bubbles: [],
     collected: [],
     finished: false,
@@ -32,9 +32,12 @@ export function createInitialState(sequence: string[]): BubbleGameState {
 }
 
 export function spawnBubble(state: BubbleGameState, x: number): BubbleGameState {
-  if (state.finished) return state
-  const bubble: Bubble = { id: state.nextId, x, letter: state.sequence[state.currentIndex] }
-  return { ...state, bubbles: [...state.bubbles, bubble], nextId: state.nextId + 1 }
+  if (state.finished || state.available.length === 0) return state
+  const index = Math.floor(Math.random() * state.available.length)
+  const letter = state.available[index]
+  const available = [...state.available.slice(0, index), ...state.available.slice(index + 1)]
+  const bubble: Bubble = { id: state.nextId, x, letter }
+  return { ...state, available, bubbles: [...state.bubbles, bubble], nextId: state.nextId + 1 }
 }
 
 export function getResultWord(state: BubbleGameState): string {
@@ -44,18 +47,24 @@ export function getResultWord(state: BubbleGameState): string {
     .join('')
 }
 
-export function popBubble(state: BubbleGameState, letter: string, x: number): BubbleGameState {
+export function popBubble(state: BubbleGameState, id: number, letter: string, x: number): BubbleGameState {
   if (state.finished) return state
 
   const collected = [...state.collected, { letter, x }]
-  const currentIndex = state.currentIndex + 1
-  const finished = currentIndex >= state.sequence.length
-  const next = { ...state, collected, currentIndex, bubbles: [], finished, won: false }
+  const bubbles = state.bubbles.filter((bubble) => bubble.id !== id)
+  const finished = collected.length >= state.sequence.length
+  const next = { ...state, collected, bubbles, finished, won: false }
   return { ...next, won: finished && getResultWord(next) === state.sequence.join('') }
 }
 
 export function expireBubble(state: BubbleGameState, id: number): BubbleGameState {
-  return { ...state, bubbles: state.bubbles.filter((bubble) => bubble.id !== id) }
+  const bubble = state.bubbles.find((b) => b.id === id)
+  if (!bubble) return state
+  return {
+    ...state,
+    bubbles: state.bubbles.filter((b) => b.id !== id),
+    available: [...state.available, bubble.letter],
+  }
 }
 
 export function resetGame(state: BubbleGameState): BubbleGameState {

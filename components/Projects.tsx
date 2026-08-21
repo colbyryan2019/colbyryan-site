@@ -2,8 +2,8 @@ import { projects } from '@/lib/content'
 
 export default function Projects() {
   return (
-    <section className="fade-in-section space-y-10">
-      <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+    <section id="projects" className="fade-in-section scroll-mt-24 space-y-10">
+      <h2 className="text-3xl font-bold tracking-tight">Projects</h2>
       <ul className="grid gap-6 sm:grid-cols-2">
         {projects.map((project) => (
           <li
@@ -11,7 +11,7 @@ export default function Projects() {
             className="flex flex-col justify-between gap-4 rounded-xl border border-gray-200 p-6 transition-colors hover:border-accent dark:border-gray-800"
           >
             <div>
-              <h2 className="text-lg font-semibold">{project.title}</h2>
+              <h3 className="text-lg font-semibold">{project.title}</h3>
               <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{project.description}</p>
             </div>
             <a

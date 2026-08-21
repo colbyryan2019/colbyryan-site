@@ -3,8 +3,8 @@ import { experience } from '@/lib/content'
 
 export default function Experience() {
   return (
-    <section className="fade-in-section space-y-10">
-      <h1 className="text-3xl font-bold tracking-tight">Experience</h1>
+    <section id="experience" className="fade-in-section scroll-mt-24 space-y-10">
+      <h2 className="text-3xl font-bold tracking-tight">Experience</h2>
       <ol className="space-y-10">
         {experience.map((entry) => (
           <li
@@ -23,7 +23,7 @@ export default function Experience() {
                   />
                 )}
                 <div>
-                  <h2 className="text-lg font-semibold">{entry.company}</h2>
+                  <h3 className="text-lg font-semibold">{entry.company}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{entry.role}</p>
                 </div>
               </div>
