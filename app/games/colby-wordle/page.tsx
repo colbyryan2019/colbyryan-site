@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import ColbyWordle from '@/components/ColbyWordle'
 
 export const metadata: Metadata = {
-  title: 'Colby Wordle',
-  description: "Guess the secret word. Hint: it never changes.",
+  title: 'Colbordle',
+  description: "Guess the secret word.",
   alternates: { canonical: '/games/colby-wordle' },
 }
 

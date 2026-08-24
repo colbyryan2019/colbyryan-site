@@ -13,15 +13,56 @@ export const ANSWER = 'colby'
 export const WORD_LENGTH = ANSWER.length
 export const MAX_GUESSES = 6
 
-export function storageKey(date: Date = new Date()): string {
+export interface WordleStats {
+  gamesPlayed: number
+  gamesWon: number
+  currentStreak: number
+  maxStreak: number
+  lastPlayedDate: string | null
+}
+
+export function dateKey(date: Date = new Date()): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  return `colby-wordle-${year}-${month}-${day}`
+  return `${year}-${month}-${day}`
+}
+
+export function storageKey(date: Date = new Date()): string {
+  return `colby-wordle-${dateKey(date)}`
+}
+
+export function statsStorageKey(): string {
+  return 'colby-wordle-stats'
 }
 
 export function createInitialState(): ColbyWordleState {
   return { guesses: [], results: [], currentGuess: '', status: 'playing' }
+}
+
+export function createInitialStats(): WordleStats {
+  return { gamesPlayed: 0, gamesWon: 0, currentStreak: 0, maxStreak: 0, lastPlayedDate: null }
+}
+
+function isNextDay(previous: string, today: string): boolean {
+  const previousDate = new Date(`${previous}T00:00:00`)
+  const todayDate = new Date(`${today}T00:00:00`)
+  const dayMs = 24 * 60 * 60 * 1000
+  return Math.round((todayDate.getTime() - previousDate.getTime()) / dayMs) === 1
+}
+
+export function updateStats(stats: WordleStats, status: 'won' | 'lost', today: string): WordleStats {
+  const won = status === 'won'
+  const isConsecutive = stats.lastPlayedDate !== null && isNextDay(stats.lastPlayedDate, today)
+  const currentStreak = won ? (isConsecutive ? stats.currentStreak + 1 : 1) : 0
+
+  return {
+    gamesPlayed: stats.gamesPlayed + 1,
+    gamesWon: stats.gamesWon + (won ? 1 : 0),
+    currentStreak,
+    maxStreak: Math.max(stats.maxStreak, currentStreak),
+    lastPlayedDate: today,
+  }
 }
 
 export function evaluateGuess(guess: string, answer: string): LetterStatus[] {

@@ -116,7 +116,7 @@ export const games: GameEntry[] = [
   },
   {
     title: 'Colby Wordle',
-    description: 'Guess the secret word in six tries. Hint: it never changes.',
+    description: 'Guess the secret word in six tries.',
     href: '/games/colby-wordle',
   },
 ]

@@ -1,15 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import {
   createInitialState,
+  createInitialStats,
   evaluateGuess,
   addLetter,
   removeLetter,
   submitGuess,
   storageKey,
+  statsStorageKey,
+  dateKey,
+  updateStats,
   ANSWER,
   WORD_LENGTH,
   MAX_GUESSES,
   type ColbyWordleState,
+  type WordleStats,
 } from '../colbyWordle'
 
 describe('colbyWordle', () => {
@@ -181,6 +186,118 @@ describe('colbyWordle', () => {
     it('sets the answer to colby', () => {
       expect(ANSWER).toBe('colby')
       expect(ANSWER).toHaveLength(WORD_LENGTH)
+    })
+  })
+
+  describe('dateKey', () => {
+    it('formats a zero-padded local date', () => {
+      expect(dateKey(new Date(2026, 0, 5))).toBe('2026-01-05')
+    })
+  })
+
+  describe('statsStorageKey', () => {
+    it('is a single key, not date-scoped', () => {
+      expect(statsStorageKey()).toBe('colby-wordle-stats')
+    })
+  })
+
+  describe('createInitialStats', () => {
+    it('starts at zero with no last played date', () => {
+      const stats = createInitialStats()
+
+      expect(stats).toEqual({
+        gamesPlayed: 0,
+        gamesWon: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        lastPlayedDate: null,
+      })
+    })
+  })
+
+  describe('updateStats', () => {
+    it('records a first win as a streak of one', () => {
+      const stats = updateStats(createInitialStats(), 'won', '2026-01-05')
+
+      expect(stats).toEqual({
+        gamesPlayed: 1,
+        gamesWon: 1,
+        currentStreak: 1,
+        maxStreak: 1,
+        lastPlayedDate: '2026-01-05',
+      })
+    })
+
+    it('records a first loss with no streak', () => {
+      const stats = updateStats(createInitialStats(), 'lost', '2026-01-05')
+
+      expect(stats).toEqual({
+        gamesPlayed: 1,
+        gamesWon: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        lastPlayedDate: '2026-01-05',
+      })
+    })
+
+    it('extends the streak on a win the day after the last played day', () => {
+      const start: WordleStats = {
+        gamesPlayed: 1,
+        gamesWon: 1,
+        currentStreak: 1,
+        maxStreak: 1,
+        lastPlayedDate: '2026-01-05',
+      }
+
+      const stats = updateStats(start, 'won', '2026-01-06')
+
+      expect(stats.currentStreak).toBe(2)
+      expect(stats.maxStreak).toBe(2)
+      expect(stats.gamesPlayed).toBe(2)
+      expect(stats.gamesWon).toBe(2)
+    })
+
+    it('resets the streak to one on a win after a skipped day', () => {
+      const start: WordleStats = {
+        gamesPlayed: 3,
+        gamesWon: 3,
+        currentStreak: 3,
+        maxStreak: 3,
+        lastPlayedDate: '2026-01-05',
+      }
+
+      const stats = updateStats(start, 'won', '2026-01-08')
+
+      expect(stats.currentStreak).toBe(1)
+      expect(stats.maxStreak).toBe(3)
+    })
+
+    it('resets the streak to zero on a loss even after a win the day before', () => {
+      const start: WordleStats = {
+        gamesPlayed: 2,
+        gamesWon: 2,
+        currentStreak: 2,
+        maxStreak: 2,
+        lastPlayedDate: '2026-01-05',
+      }
+
+      const stats = updateStats(start, 'lost', '2026-01-06')
+
+      expect(stats.currentStreak).toBe(0)
+      expect(stats.maxStreak).toBe(2)
+      expect(stats.gamesPlayed).toBe(3)
+      expect(stats.gamesWon).toBe(2)
+    })
+
+    it('keeps the highest maxStreak reached even after it resets', () => {
+      let stats = createInitialStats()
+      stats = updateStats(stats, 'won', '2026-01-01')
+      stats = updateStats(stats, 'won', '2026-01-02')
+      stats = updateStats(stats, 'lost', '2026-01-03')
+      stats = updateStats(stats, 'won', '2026-01-04')
+
+      expect(stats.currentStreak).toBe(1)
+      expect(stats.maxStreak).toBe(2)
     })
   })
 })

@@ -6,12 +6,17 @@ import {
   MAX_GUESSES,
   WORD_LENGTH,
   addLetter,
+  createInitialStats,
   createInitialState,
+  dateKey,
   removeLetter,
+  statsStorageKey,
   storageKey,
   submitGuess,
+  updateStats,
   type ColbyWordleState,
   type LetterStatus,
+  type WordleStats,
 } from '@/lib/colbyWordle'
 
 type Action =
@@ -57,6 +62,7 @@ function tileLabel(row: number, col: number, letter: string | undefined, status:
 
 export default function ColbyWordle() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState)
+  const [stats, setStats] = useState<WordleStats>(createInitialStats)
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -68,7 +74,15 @@ export default function ColbyWordle() {
         // ignore malformed storage and start fresh
       }
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration guard: must set after mount to avoid SSR/client mismatch
+    const rawStats = window.localStorage.getItem(statsStorageKey())
+    if (rawStats) {
+      try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration guard: must set after mount to avoid SSR/client mismatch
+        setStats(JSON.parse(rawStats) as WordleStats)
+      } catch {
+        // ignore malformed storage and start fresh
+      }
+    }
     setHydrated(true)
   }, [])
 
@@ -76,6 +90,19 @@ export default function ColbyWordle() {
     if (!hydrated) return
     window.localStorage.setItem(storageKey(), JSON.stringify(state))
   }, [state, hydrated])
+
+  useEffect(() => {
+    if (!hydrated || state.status === 'playing') return
+    const today = dateKey()
+    if (stats.lastPlayedDate === today) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- records today's finished result once, guarded by lastPlayedDate
+    setStats((prev) => updateStats(prev, state.status as 'won' | 'lost', today))
+  }, [hydrated, state.status, stats.lastPlayedDate])
+
+  useEffect(() => {
+    if (!hydrated) return
+    window.localStorage.setItem(statsStorageKey(), JSON.stringify(stats))
+  }, [stats, hydrated])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -109,13 +136,30 @@ export default function ColbyWordle() {
     <div className="mx-auto flex max-w-sm flex-col items-center gap-6">
       {finished && (
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Colby Wordle</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Colbordle</h1>
           <p className="mt-2 text-lg font-semibold text-accent">
             {state.status === 'won'
               ? `Got it in ${state.guesses.length}/${MAX_GUESSES}!`
               : `The word was ${ANSWER.toUpperCase()}.`}
           </p>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">Come back tomorrow for another round.</p>
+
+          <div className="mt-4 flex justify-center gap-6">
+            {[
+              { label: 'Streak', value: stats.currentStreak },
+              { label: 'Max Streak', value: stats.maxStreak },
+              { label: 'Played', value: stats.gamesPlayed },
+              {
+                label: 'Win %',
+                value: stats.gamesPlayed === 0 ? 0 : Math.round((stats.gamesWon / stats.gamesPlayed) * 100),
+              },
+            ].map(({ label, value }) => (
+              <div key={label} aria-label={`${label}: ${value}`}>
+                <div className="text-xl font-bold">{value}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-500">{label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -137,9 +181,8 @@ export default function ColbyWordle() {
                   <span
                     key={col}
                     aria-label={tileLabel(row, col, letter, status)}
-                    className={`flex h-12 w-12 items-center justify-center rounded border text-xl font-bold uppercase ${
-                      status ? TILE_CLASSES[status] : 'border-gray-300 dark:border-gray-700'
-                    }`}
+                    className={`flex h-12 w-12 items-center justify-center rounded border text-xl font-bold uppercase ${status ? TILE_CLASSES[status] : 'border-gray-300 dark:border-gray-700'
+                      }`}
                   >
                     {letter ?? ''}
                   </span>
@@ -162,9 +205,8 @@ export default function ColbyWordle() {
                     type="button"
                     aria-label={status ? `${letter.toUpperCase()}, ${status}` : letter.toUpperCase()}
                     onClick={() => dispatch({ type: 'type', letter })}
-                    className={`flex h-10 w-8 items-center justify-center rounded text-sm font-semibold uppercase transition-colors ${
-                      status ? KEY_CLASSES[status] : 'border border-gray-300 dark:border-gray-700'
-                    }`}
+                    className={`flex h-10 w-8 items-center justify-center rounded text-sm font-semibold uppercase transition-colors ${status ? KEY_CLASSES[status] : 'border border-gray-300 dark:border-gray-700'
+                      }`}
                   >
                     {letter}
                   </button>

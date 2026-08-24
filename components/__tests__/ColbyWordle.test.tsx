@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import ColbyWordle from '../ColbyWordle'
+import { dateKey, statsStorageKey, type WordleStats } from '@/lib/colbyWordle'
 
 function typeWord(word: string) {
   for (const char of word) {
@@ -10,6 +11,16 @@ function typeWord(word: string) {
 
 function submit() {
   fireEvent.keyDown(window, { key: 'Enter' })
+}
+
+function daysAgo(n: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() - n)
+  return dateKey(date)
+}
+
+function seedStats(stats: WordleStats) {
+  localStorage.setItem(statsStorageKey(), JSON.stringify(stats))
 }
 
 describe('ColbyWordle', () => {
@@ -24,7 +35,7 @@ describe('ColbyWordle', () => {
   it('does not show the title while a round is actively being played', () => {
     render(<ColbyWordle />)
 
-    expect(screen.queryByRole('heading', { name: 'Colby Wordle' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Colbordle' })).not.toBeInTheDocument()
   })
 
   it('fills the first guess row as letters are typed', () => {
@@ -87,7 +98,7 @@ describe('ColbyWordle', () => {
     typeWord('colby')
     submit()
 
-    expect(screen.getByRole('heading', { name: 'Colby Wordle' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Colbordle' })).toBeInTheDocument()
     expect(screen.getByText(/got it in 1\/6/i)).toBeInTheDocument()
   })
 
@@ -108,7 +119,7 @@ describe('ColbyWordle', () => {
       submit()
     }
 
-    expect(screen.getByRole('heading', { name: 'Colby Wordle' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Colbordle' })).toBeInTheDocument()
     expect(screen.getByText(/the word was colby/i)).toBeInTheDocument()
   })
 
@@ -120,7 +131,7 @@ describe('ColbyWordle', () => {
 
     render(<ColbyWordle />)
 
-    expect(screen.getByRole('heading', { name: 'Colby Wordle' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Colbordle' })).toBeInTheDocument()
     expect(screen.getByText(/got it in 1\/6/i)).toBeInTheDocument()
   })
 
@@ -133,6 +144,64 @@ describe('ColbyWordle', () => {
     render(<ColbyWordle />)
 
     expect(screen.getByLabelText('Row 1 letter 1: Z, absent')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Colby Wordle' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Colbordle' })).not.toBeInTheDocument()
+  })
+
+  it('records a streak of one and 100% win rate after the first-ever win', () => {
+    render(<ColbyWordle />)
+    typeWord('colby')
+    submit()
+
+    expect(screen.getByLabelText('Streak: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Max Streak: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Played: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Win %: 100')).toBeInTheDocument()
+  })
+
+  it('records a loss without starting a streak', () => {
+    render(<ColbyWordle />)
+    for (let i = 0; i < 6; i++) {
+      typeWord('zzzzz')
+      submit()
+    }
+
+    expect(screen.getByLabelText('Streak: 0')).toBeInTheDocument()
+    expect(screen.getByLabelText('Played: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Win %: 0')).toBeInTheDocument()
+  })
+
+  it('extends the streak when yesterday was also won', () => {
+    seedStats({ gamesPlayed: 1, gamesWon: 1, currentStreak: 1, maxStreak: 1, lastPlayedDate: daysAgo(1) })
+
+    render(<ColbyWordle />)
+    typeWord('colby')
+    submit()
+
+    expect(screen.getByLabelText('Streak: 2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Max Streak: 2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Played: 2')).toBeInTheDocument()
+  })
+
+  it('resets the streak to one after skipping a day, keeping the prior max', () => {
+    seedStats({ gamesPlayed: 4, gamesWon: 4, currentStreak: 4, maxStreak: 4, lastPlayedDate: daysAgo(3) })
+
+    render(<ColbyWordle />)
+    typeWord('colby')
+    submit()
+
+    expect(screen.getByLabelText('Streak: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Max Streak: 4')).toBeInTheDocument()
+  })
+
+  it('does not double-count stats when remounted after finishing the same day', () => {
+    const { unmount } = render(<ColbyWordle />)
+    typeWord('colby')
+    submit()
+    unmount()
+
+    render(<ColbyWordle />)
+
+    expect(screen.getByLabelText('Played: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Streak: 1')).toBeInTheDocument()
   })
 })
