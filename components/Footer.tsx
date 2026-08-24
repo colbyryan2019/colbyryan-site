@@ -2,7 +2,7 @@ import { contact } from '@/lib/content'
 
 export default function Footer() {
   return (
-    <footer className="mt-24 border-t border-gray-200 py-10 dark:border-gray-800">
+    <footer className="mt-12 border-t border-gray-200 py-10 dark:border-gray-800">
       <div className="mx-auto flex max-w-4xl flex-col items-center gap-3 px-6 text-sm text-gray-600 dark:text-gray-400">
         <div className="flex flex-wrap items-center justify-center gap-4">
           <a href={`mailto:${contact.email}`} className="transition-colors hover:text-accent">

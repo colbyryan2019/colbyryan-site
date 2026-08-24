@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const routes = ['', '/about', '/games/bubble-pop']
+const routes = ['', '/about', '/games/bubble-burst']
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return routes.map((route) => ({

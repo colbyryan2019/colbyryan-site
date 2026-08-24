@@ -12,33 +12,27 @@ export interface CollectedLetter {
 
 export interface BubbleGameState {
   sequence: string[]
-  available: string[]
   bubbles: Bubble[]
   collected: CollectedLetter[]
   finished: boolean
-  won: boolean
   nextId: number
 }
 
 export function createInitialState(sequence: string[]): BubbleGameState {
   return {
     sequence,
-    available: [...sequence],
     bubbles: [],
     collected: [],
     finished: false,
-    won: false,
     nextId: 1,
   }
 }
 
 export function spawnBubble(state: BubbleGameState, x: number): BubbleGameState {
-  if (state.finished || state.available.length === 0) return state
-  const index = Math.floor(Math.random() * state.available.length)
-  const letter = state.available[index]
-  const available = [...state.available.slice(0, index), ...state.available.slice(index + 1)]
+  if (state.finished) return state
+  const letter = state.sequence[Math.floor(Math.random() * state.sequence.length)]
   const bubble: Bubble = { id: state.nextId, x, letter }
-  return { ...state, available, bubbles: [...state.bubbles, bubble], nextId: state.nextId + 1 }
+  return { ...state, bubbles: [...state.bubbles, bubble], nextId: state.nextId + 1 }
 }
 
 export function getResultWord(state: BubbleGameState): string {
@@ -59,18 +53,11 @@ export function popBubble(state: BubbleGameState, id: number, letter: string, x:
   const collected = [...state.collected, { id, letter, x }]
   const bubbles = state.bubbles.filter((bubble) => bubble.id !== id)
   const finished = collected.length >= state.sequence.length
-  const next = { ...state, collected, bubbles, finished, won: false }
-  return { ...next, won: finished && getResultWord(next) === state.sequence.join('') }
+  return { ...state, collected, bubbles, finished }
 }
 
 export function expireBubble(state: BubbleGameState, id: number): BubbleGameState {
-  const bubble = state.bubbles.find((b) => b.id === id)
-  if (!bubble) return state
-  return {
-    ...state,
-    bubbles: state.bubbles.filter((b) => b.id !== id),
-    available: [...state.available, bubble.letter],
-  }
+  return { ...state, bubbles: state.bubbles.filter((b) => b.id !== id) }
 }
 
 export function resetGame(state: BubbleGameState): BubbleGameState {

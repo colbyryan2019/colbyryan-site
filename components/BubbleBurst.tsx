@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import Link from 'next/link'
+import UnderwaterScene from './UnderwaterScene'
 import {
   createInitialState,
   expireBubble,
@@ -10,7 +11,7 @@ import {
   resetGame,
   spawnBubble,
   type BubbleGameState,
-} from '@/lib/bubbleGame'
+} from '@/lib/bubbleBurst'
 
 const SEQUENCE = ['C', 'O', 'L', 'B', 'Y']
 const SPAWN_INTERVAL_MS = 1200
@@ -89,7 +90,7 @@ function Fireworks() {
   )
 }
 
-export default function BubbleGame() {
+export default function BubbleBurst() {
   const [state, dispatch] = useReducer(reducer, undefined, init)
   const containerRef = useRef<HTMLDivElement>(null)
   const [bursts, setBursts] = useState<{ id: number; left: number; top: number }[]>([])
@@ -114,8 +115,12 @@ export default function BubbleGame() {
     }, POP_BURST_DURATION_MS)
   }
 
+  const resultWord = getResultWord(state)
+  const isPerfect = resultWord === SEQUENCE.join('')
+
   return (
-    <div ref={containerRef} className="relative left-1/2 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-sky-50 to-sky-100 dark:border-gray-800 dark:from-gray-900 dark:to-gray-950">
+    <div ref={containerRef} className="relative left-1/2 -mt-16 -mb-16 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-sky-100 via-cyan-200 to-blue-400 dark:border-gray-800 dark:from-gray-900 dark:via-slate-900 dark:to-blue-950">
+      <UnderwaterScene />
       <Link
         href="/"
         className="absolute left-4 top-4 z-10 flex items-center gap-1 rounded-full border border-accent bg-white/70 px-3 py-1.5 text-sm font-medium text-accent backdrop-blur transition-colors hover:bg-accent hover:text-gray-950 dark:bg-gray-950/70"
@@ -158,26 +163,31 @@ export default function BubbleGame() {
       ))}
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 border-t border-gray-200 bg-white/70 dark:border-gray-800 dark:bg-gray-950/70">
-        {[...state.collected]
-          .sort((a, b) => a.x - b.x)
-          .map((entry) => (
-            <span
-              key={`${entry.x}-${entry.letter}`}
-              style={{ left: `${entry.x}%` }}
-              className="letter-fall absolute top-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-lg font-bold text-gray-950"
-            >
-              {entry.letter}
-            </span>
-          ))}
+        {state.collected.map((entry) => (
+          <span
+            key={entry.id}
+            style={{ left: `${entry.x}%` }}
+            className="letter-fall absolute top-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-lg font-bold text-gray-950"
+          >
+            {entry.letter}
+          </span>
+        ))}
       </div>
+
+      {!state.finished && (
+        <p className="pointer-events-none absolute inset-x-0 top-4 z-0 text-center text-xs text-gray-500 dark:text-gray-400">
+          No penalty for missed bubbles — pop at your own pace.
+        </p>
+      )}
 
       {state.finished && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 dark:bg-gray-950/90">
-          {state.won && <Fireworks />}
+          <Fireworks />
+          {isPerfect && <Fireworks />}
           <h1 className="word-rise relative text-5xl font-bold tracking-tight text-accent sm:text-6xl">
-            {getResultWord(state)}
+            {resultWord}
           </h1>
-          <p className="relative text-sm text-gray-600 dark:text-gray-400">Try again?</p>
+          {isPerfect && <p className="relative text-sm font-medium text-accent">Perfect! 🎉</p>}
           <button
             type="button"
             onClick={() => dispatch({ type: 'reset' })}

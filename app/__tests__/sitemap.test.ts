@@ -10,7 +10,7 @@ describe('sitemap', () => {
     expect(urls).toEqual([
       'https://colbyryan.com',
       'https://colbyryan.com/about',
-      'https://colbyryan.com/games/bubble-pop',
+      'https://colbyryan.com/games/bubble-burst',
     ])
   })
 })

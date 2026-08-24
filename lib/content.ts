@@ -105,9 +105,14 @@ export interface GameEntry {
 
 export const games: GameEntry[] = [
   {
-    title: 'Bubble Pop',
-    description: 'Pop the rising bubbles in the right order before they float away.',
-    href: '/games/bubble-pop',
+    title: 'Bubble Burst',
+    description: 'Pop the rising bubbles before they float away.',
+    href: '/games/bubble-burst',
+  },
+  {
+    title: 'Word Rain',
+    description: 'Type the falling words before they hit the bottom. Three lives, and it gets faster as you go.',
+    href: '/games/word-rain',
   },
 ]
 

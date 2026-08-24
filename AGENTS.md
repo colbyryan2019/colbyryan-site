@@ -14,7 +14,7 @@ This is Colby Ryan's personal site. Games are the primary/home content;
 the resume material is secondary, reached via "About."
 
 - `/` — homepage, renders `components/Games.tsx` (the games hub/grid).
-- `/games/bubble-pop` — an individual game page. New games get their own
+- `/games/bubble-burst` — an individual game page. New games get their own
   `app/games/<name>/page.tsx` and an entry in the `games` array in
   `lib/content.ts`; they stay listed on `/`, no separate index page.
 - `/about` (`app/about/page.tsx`) — single consolidated resume page,
@@ -38,7 +38,7 @@ the resume material is secondary, reached via "About."
 
 ## Games architecture
 
-Each game follows the same three-piece shape (see Bubble Pop as the
+Each game follows the same three-piece shape (see Bubble Burst as the
 reference implementation):
 
 - `lib/<game>.ts` — pure state/logic only: an initial-state factory
