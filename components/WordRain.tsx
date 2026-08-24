@@ -116,7 +116,7 @@ export default function WordRain() {
           key={word.id}
           aria-label={`Falling word ${word.word}`}
           style={{ left: `${word.x}%`, animationDuration: `${word.fallDurationMs}ms` }}
-          className="word-fall absolute text-xl font-bold"
+          className="word-fall absolute text-3xl font-bold"
         >
           <span className="text-accent">{word.word.slice(0, word.typed)}</span>
           <span>{word.word.slice(word.typed)}</span>

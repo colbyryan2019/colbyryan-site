@@ -4,7 +4,6 @@ import { games } from '@/lib/content'
 export default function Games() {
   return (
     <section className="fade-in-section space-y-10">
-      <h1 className="text-3xl font-bold tracking-tight">Games</h1>
       <ul className="grid gap-6 sm:grid-cols-2">
         {games.map((game) => (
           <li

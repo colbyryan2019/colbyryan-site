@@ -23,11 +23,6 @@ export default function Nav() {
             </li>
           ))}
           <li>
-            <a href={contact.resumeHref} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
-              Resume
-            </a>
-          </li>
-          <li>
             <ThemeToggle />
           </li>
         </ul>

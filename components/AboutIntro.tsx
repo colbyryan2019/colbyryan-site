@@ -31,33 +31,29 @@ export default function AboutIntro() {
             {contact.phone}
           </a>
         </div>
-        <a
-          href={contact.resumeHref}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-accent px-6 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
-        >
-          View Resume →
-        </a>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
-          <Link
-            href="/"
+          <a
+            href={contact.resumeHref}
+            target="_blank"
+            rel="noreferrer"
             className="rounded-full border border-accent bg-accent px-8 py-3 text-base font-semibold text-gray-950 transition-colors hover:bg-transparent hover:text-accent"
           >
-            Play Games
-          </Link>
+            Resume
+          </a>
           <Link
             href="#experience"
             className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
           >
             Experience
           </Link>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-4 text-sm sm:justify-start">
-          <Link href="#education" className="transition-colors hover:text-accent">
+          <Link
+            href="#education"
+            className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
+          >
             Education
           </Link>
-          <span>·</span>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4 text-sm sm:justify-start">
           <Link href="#projects" className="transition-colors hover:text-accent">
             Projects
           </Link>

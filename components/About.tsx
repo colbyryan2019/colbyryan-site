@@ -4,21 +4,23 @@ export default function About() {
       <h2 className="text-3xl font-bold tracking-tight">About</h2>
       <div className="space-y-4 text-gray-700 dark:text-gray-300">
         <p>
-          Software Engineer at Panoramix Financial in New York City. Graduated Union
-          College in 2024, double major Computer Science and Mathematics.
+          I&apos;m a software engineer at Panoramix Financial in New York City. I
+          graduated from Union College in 2024, where I double-majored in Computer
+          Science and Mathematics.
         </p>
         <p>
-          At Panoramix, led development of FacetAI (an AI-powered assistant announced at
-          the T3 conference), and built full-stack features including a
-          Retrieval-Augmented Generation bot, nearest-neighbor search for embedded text
-          retrieval, and user-facing investment model tooling.
+          At Panoramix, I led development of FacetAI, an AI-powered assistant we
+          announced at the T3 conference. I&apos;ve also built full-stack features like a
+          Retrieval-Augmented Generation bot, a nearest-neighbor search system for
+          retrieving embedded text, and tools for managing investment models.
         </p>
         <p>
-          Previously interned at PanAgora Asset Management (data science) and TandemAI
-          (HPC storage performance). Spent a gap year in Barcelona, Spain after high
-          school, earning a TEFL certification and teaching English.
+          Before that, I interned in data science at PanAgora Asset Management and
+          worked on HPC storage performance at TandemAI. I also spent a gap year in
+          Barcelona, Spain after high school, where I got my TEFL certification and
+          taught English.
         </p>
-        <p>Outside work: building mobile apps, traveling, soccer, basketball, chess.</p>
+        <p>Outside of work, I build mobile apps, travel, and play soccer, basketball, and chess.</p>
       </div>
     </section>
   )
