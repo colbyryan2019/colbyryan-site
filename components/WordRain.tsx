@@ -1,45 +1,90 @@
 'use client'
 
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react'
 import KitchenScene from './KitchenScene'
 import {
   MAX_LIVES,
+  clearBonusEvent,
   createInitialState,
   getDifficulty,
   missWord,
   resetGame,
   spawnWord,
   typeChar,
+  type BonusEvent,
   type WordRainState,
 } from '@/lib/wordRain'
 
 const INTRO_DURATION_MS = 2500
+export const BONUS_ANIMATION_MS = 900
+const BONUS_PARTICLES = 10
+const BONUS_COLORS = ['bg-accent', 'bg-pink-400', 'bg-yellow-300', 'bg-emerald-400']
 
 type Action =
-  | { type: 'spawn'; x: number }
+  | { type: 'spawn'; containerWidth: number }
   | { type: 'type'; char: string }
   | { type: 'miss'; id: number }
+  | { type: 'clearBonus' }
   | { type: 'reset' }
 
 function reducer(state: WordRainState, action: Action): WordRainState {
   switch (action.type) {
     case 'spawn':
-      return spawnWord(state, action.x)
+      return spawnWord(state, action.containerWidth)
     case 'type':
       return typeChar(state, action.char)
     case 'miss':
       return missWord(state, action.id)
+    case 'clearBonus':
+      return clearBonusEvent(state)
     case 'reset':
       return resetGame()
   }
 }
 
+export function BonusConfetti({ event, onDone }: { event: BonusEvent | null; onDone: () => void }) {
+  useEffect(() => {
+    if (!event) return
+    const timer = setTimeout(onDone, BONUS_ANIMATION_MS)
+    return () => clearTimeout(timer)
+  }, [event, onDone])
+
+  if (!event) return null
+
+  return (
+    <div className="pointer-events-none absolute top-1/3" style={{ left: `${event.x}px` }}>
+      {Array.from({ length: BONUS_PARTICLES }, (_, i) => (
+        <span
+          key={i}
+          style={{ '--angle': `${(360 / BONUS_PARTICLES) * i}deg` } as CSSProperties}
+          className={`firework-particle ${BONUS_COLORS[i % BONUS_COLORS.length]}`}
+        />
+      ))}
+      <span className="score-pop absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-lg font-bold text-accent">
+        +{event.points}
+      </span>
+    </div>
+  )
+}
+
 export default function WordRain() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState)
   const [showIntro, setShowIntro] = useState(true)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
   const missTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>())
 
   const { level, spawnIntervalMs } = getDifficulty(state.score)
+
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return
+      setContainerWidth(containerRef.current.getBoundingClientRect().width)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   useEffect(() => {
     if (!showIntro) return
@@ -50,10 +95,10 @@ export default function WordRain() {
   useEffect(() => {
     if (state.finished || showIntro) return
     const interval = setInterval(() => {
-      dispatch({ type: 'spawn', x: Math.random() * 100 })
+      dispatch({ type: 'spawn', containerWidth })
     }, spawnIntervalMs)
     return () => clearInterval(interval)
-  }, [state.finished, showIntro, spawnIntervalMs, level])
+  }, [state.finished, showIntro, spawnIntervalMs, level, containerWidth])
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -102,7 +147,10 @@ export default function WordRain() {
   )
 
   return (
-    <div className="relative left-1/2 -mt-16 -mb-16 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950">
+    <div
+      ref={containerRef}
+      className="relative left-1/2 -mt-16 -mb-16 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950"
+    >
       <KitchenScene />
       <span className="pointer-events-none absolute left-4 top-3 z-10 text-sm font-medium text-gray-700 dark:text-gray-300">
         Score: {state.score}
@@ -115,13 +163,15 @@ export default function WordRain() {
         <div
           key={word.id}
           aria-label={`Falling word ${word.word}`}
-          style={{ left: `${word.x}%`, animationDuration: `${word.fallDurationMs}ms` }}
+          style={{ left: `${word.x}px`, animationDuration: `${word.fallDurationMs}ms` }}
           className="word-fall absolute text-3xl font-bold"
         >
           <span className="text-accent">{word.word.slice(0, word.typed)}</span>
           <span>{word.word.slice(word.typed)}</span>
         </div>
       ))}
+
+      <BonusConfetti event={state.bonusEvent} onDone={() => dispatch({ type: 'clearBonus' })} />
 
       {showIntro && !state.finished && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 px-6 text-center dark:bg-gray-950/90">

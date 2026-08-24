@@ -6,6 +6,11 @@ export interface FallingWord {
   fallDurationMs: number
 }
 
+export interface BonusEvent {
+  x: number
+  points: number
+}
+
 export interface WordRainState {
   words: FallingWord[]
   score: number
@@ -13,6 +18,7 @@ export interface WordRainState {
   finished: boolean
   nextId: number
   activeWordId: number | null
+  bonusEvent: BonusEvent | null
 }
 
 export interface Difficulty {
@@ -85,6 +91,19 @@ export const THEMED_WORDS = ['colby', 'ryan', 'union', 'panoramix']
 
 export const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('')
 
+// Rough per-character width for the text-3xl bold falling text, with a
+// safety margin - used to keep spawn positions from running off-screen
+// rather than to pixel-match the rendered font exactly.
+export const CHAR_WIDTH_PX = 22
+export const WORD_HORIZONTAL_PADDING_PX = 24
+
+// Fraction of spawns drawn from the word/themed-word pool rather than the
+// single-letter pool, so words show up far more often than lone letters.
+export const WORD_PICK_CHANCE = 0.75
+
+export const BONUS_WORD = 'colby'
+export const BONUS_MULTIPLIER = 5
+
 export function createInitialState(): WordRainState {
   return {
     words: [],
@@ -93,6 +112,7 @@ export function createInitialState(): WordRainState {
     finished: false,
     nextId: 1,
     activeWordId: null,
+    bonusEvent: null,
   }
 }
 
@@ -109,16 +129,24 @@ export function getDifficulty(score: number): Difficulty {
 }
 
 function pickWord(maxLength: number): string {
-  const pool = [...WORDS, ...THEMED_WORDS, ...LETTERS].filter((word) => word.length <= maxLength)
+  const words = [...WORDS, ...THEMED_WORDS].filter((word) => word.length <= maxLength)
+  const pool = words.length > 0 && Math.random() < WORD_PICK_CHANCE ? words : LETTERS
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-export function spawnWord(state: WordRainState, x: number): WordRainState {
+function estimateWordWidthPx(word: string): number {
+  return word.length * CHAR_WIDTH_PX + WORD_HORIZONTAL_PADDING_PX
+}
+
+export function spawnWord(state: WordRainState, containerWidthPx: number): WordRainState {
   if (state.finished) return state
   const { maxConcurrent, maxWordLength, fallDurationMinMs, fallDurationMaxMs } = getDifficulty(state.score)
   if (state.words.length >= maxConcurrent) return state
   const fallDurationMs = fallDurationMinMs + Math.random() * (fallDurationMaxMs - fallDurationMinMs)
-  const word: FallingWord = { id: state.nextId, word: pickWord(maxWordLength), typed: 0, x, fallDurationMs }
+  const pickedWord = pickWord(maxWordLength)
+  const maxX = Math.max(0, containerWidthPx - estimateWordWidthPx(pickedWord))
+  const x = Math.random() * maxX
+  const word: FallingWord = { id: state.nextId, word: pickedWord, typed: 0, x, fallDurationMs }
   return { ...state, words: [...state.words, word], nextId: state.nextId + 1 }
 }
 
@@ -134,11 +162,14 @@ export function typeChar(state: WordRainState, char: string): WordRainState {
   const typed = target.typed + 1
 
   if (typed === target.word.length) {
+    const isBonus = target.word === BONUS_WORD
+    const points = target.word.length * 10 * (isBonus ? BONUS_MULTIPLIER : 1)
     return {
       ...state,
       words: state.words.filter((w) => w.id !== target.id),
-      score: state.score + target.word.length * 10,
+      score: state.score + points,
       activeWordId: null,
+      bonusEvent: isBonus ? { x: target.x, points } : state.bonusEvent,
     }
   }
 
@@ -166,4 +197,8 @@ export function missWord(state: WordRainState, id: number): WordRainState {
 
 export function resetGame(): WordRainState {
   return createInitialState()
+}
+
+export function clearBonusEvent(state: WordRainState): WordRainState {
+  return { ...state, bonusEvent: null }
 }

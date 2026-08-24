@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   createInitialState,
   getDifficulty,
@@ -6,15 +6,22 @@ import {
   typeChar,
   missWord,
   resetGame,
+  clearBonusEvent,
   WORDS,
   THEMED_WORDS,
   LETTERS,
   MAX_LIVES,
+  CHAR_WIDTH_PX,
+  WORD_HORIZONTAL_PADDING_PX,
+  WORD_PICK_CHANCE,
+  BONUS_WORD,
+  BONUS_MULTIPLIER,
   type WordRainState,
   type FallingWord,
 } from '../wordRain'
 
 const DEFAULT_FALL_MS = 5000
+const CONTAINER_WIDTH = 400
 
 function withWords(
   state: WordRainState,
@@ -23,9 +30,13 @@ function withWords(
   return { ...state, words: words.map((word) => ({ fallDurationMs: DEFAULT_FALL_MS, ...word })) }
 }
 
+function estimatedWidth(word: string): number {
+  return word.length * CHAR_WIDTH_PX + WORD_HORIZONTAL_PADDING_PX
+}
+
 describe('wordRain', () => {
   describe('createInitialState', () => {
-    it('starts with no words, zero score, full lives, and not finished', () => {
+    it('starts with no words, zero score, full lives, not finished, and no pending bonus', () => {
       const state = createInitialState()
 
       expect(state.words).toEqual([])
@@ -33,6 +44,7 @@ describe('wordRain', () => {
       expect(state.lives).toBe(MAX_LIVES)
       expect(state.finished).toBe(false)
       expect(state.activeWordId).toBeNull()
+      expect(state.bonusEvent).toBeNull()
     })
   })
 
@@ -71,22 +83,41 @@ describe('wordRain', () => {
   })
 
   describe('spawnWord', () => {
-    it('adds an item from the word or letter pool at the given x position', () => {
+    it('adds an item from the word or letter pool, positioned within the safe bounds of the given container width', () => {
       const state = createInitialState()
 
-      const next = spawnWord(state, 42)
+      const next = spawnWord(state, CONTAINER_WIDTH)
 
       expect(next.words).toHaveLength(1)
-      expect(next.words[0].x).toBe(42)
       expect(next.words[0].typed).toBe(0)
       expect([...WORDS, ...THEMED_WORDS, ...LETTERS]).toContain(next.words[0].word)
+      expect(next.words[0].x).toBeGreaterThanOrEqual(0)
+      expect(next.words[0].x).toBeLessThan(CONTAINER_WIDTH)
+    })
+
+    it('never positions a word so it would run off the right edge of the play area', () => {
+      const state = createInitialState()
+
+      for (let i = 0; i < 50; i++) {
+        const next = spawnWord(state, CONTAINER_WIDTH)
+        const word = next.words[0]
+        expect(word.x + estimatedWidth(word.word)).toBeLessThanOrEqual(CONTAINER_WIDTH)
+      }
+    })
+
+    it('keeps x at zero when the container is too narrow for any word to fit', () => {
+      const state = createInitialState()
+
+      const next = spawnWord(state, 5)
+
+      expect(next.words[0].x).toBe(0)
     })
 
     it('never spawns a word longer than the current difficulty allows', () => {
       const state = createInitialState()
 
       for (let i = 0; i < 30; i++) {
-        const next = spawnWord(state, i)
+        const next = spawnWord(state, CONTAINER_WIDTH)
         expect(next.words[0].word.length).toBeLessThanOrEqual(getDifficulty(0).maxWordLength)
       }
     })
@@ -96,10 +127,30 @@ describe('wordRain', () => {
       const spawned = new Set<string>()
 
       for (let i = 0; i < 200; i++) {
-        spawned.add(spawnWord(state, i).words[0].word)
+        spawned.add(spawnWord(state, CONTAINER_WIDTH).words[0].word)
       }
 
       expect([...spawned].some((word) => word.length === 1)).toBe(true)
+    })
+
+    it('draws from the word pool (not just letters) when the roll favors words', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(WORD_PICK_CHANCE - 0.01)
+      const state = createInitialState()
+
+      const next = spawnWord(state, CONTAINER_WIDTH)
+
+      expect(next.words[0].word.length).toBeGreaterThan(1)
+      vi.restoreAllMocks()
+    })
+
+    it('falls back to the letter pool when the roll favors letters', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(WORD_PICK_CHANCE + 0.01)
+      const state = createInitialState()
+
+      const next = spawnWord(state, CONTAINER_WIDTH)
+
+      expect(next.words[0].word).toHaveLength(1)
+      vi.restoreAllMocks()
     })
 
     it('does not spawn past the current difficulty concurrency cap', () => {
@@ -108,7 +159,7 @@ describe('wordRain', () => {
         { id: 2, word: 'dog', typed: 0, x: 20 },
       ])
 
-      const next = spawnWord(state, 30)
+      const next = spawnWord(state, CONTAINER_WIDTH)
 
       expect(next.words).toHaveLength(2)
     })
@@ -119,7 +170,7 @@ describe('wordRain', () => {
       const durations = new Set<number>()
 
       for (let i = 0; i < 30; i++) {
-        const duration = spawnWord(state, i).words[0].fallDurationMs
+        const duration = spawnWord(state, CONTAINER_WIDTH).words[0].fallDurationMs
         expect(duration).toBeGreaterThanOrEqual(fallDurationMinMs)
         expect(duration).toBeLessThanOrEqual(fallDurationMaxMs)
         durations.add(duration)
@@ -131,16 +182,16 @@ describe('wordRain', () => {
     it('does not spawn once the game is finished', () => {
       const state = { ...createInitialState(), finished: true }
 
-      const next = spawnWord(state, 42)
+      const next = spawnWord(state, CONTAINER_WIDTH)
 
       expect(next.words).toEqual([])
     })
 
     it('assigns increasing unique ids across spawns', () => {
       let state = createInitialState()
-      state = spawnWord(state, 10)
+      state = spawnWord(state, CONTAINER_WIDTH)
       state = { ...state, score: 500 }
-      state = spawnWord(state, 20)
+      state = spawnWord(state, CONTAINER_WIDTH)
 
       expect(state.words.map((w) => w.id)).toEqual([1, 2])
     })
@@ -225,6 +276,27 @@ describe('wordRain', () => {
 
       expect(next).toEqual(state)
     })
+
+    it('awards a 5x bonus and records a bonus event when the themed word colby is completed', () => {
+      let state = withWords(createInitialState(), [{ id: 1, word: BONUS_WORD, typed: 0, x: 120 }])
+      for (const char of BONUS_WORD.slice(0, -1)) state = typeChar(state, char)
+
+      const next = typeChar(state, BONUS_WORD.slice(-1))
+
+      const expectedPoints = BONUS_WORD.length * 10 * BONUS_MULTIPLIER
+      expect(next.score).toBe(expectedPoints)
+      expect(next.bonusEvent).toEqual({ x: 120, points: expectedPoints })
+    })
+
+    it('awards normal points and sets no bonus event for a non-bonus word of the same length', () => {
+      let state = withWords(createInitialState(), [{ id: 1, word: 'happy', typed: 0, x: 50 }])
+      for (const char of 'happ') state = typeChar(state, char)
+
+      const next = typeChar(state, 'y')
+
+      expect(next.score).toBe(50)
+      expect(next.bonusEvent).toBeNull()
+    })
   })
 
   describe('missWord', () => {
@@ -277,6 +349,16 @@ describe('wordRain', () => {
     })
   })
 
+  describe('clearBonusEvent', () => {
+    it('resets a pending bonus event back to null', () => {
+      const state = { ...createInitialState(), bonusEvent: { x: 10, points: 250 } }
+
+      const next = clearBonusEvent(state)
+
+      expect(next.bonusEvent).toBeNull()
+    })
+  })
+
   describe('resetGame', () => {
     it('returns to the initial state regardless of prior game state', () => {
       const next = resetGame()
@@ -295,6 +377,10 @@ describe('wordRain', () => {
       expect(LETTERS).toHaveLength(26)
       expect(new Set(LETTERS).size).toBe(26)
       expect(LETTERS.every((letter) => /^[a-z]$/.test(letter))).toBe(true)
+    })
+
+    it('includes colby as the bonus word', () => {
+      expect(THEMED_WORDS).toContain(BONUS_WORD)
     })
   })
 })

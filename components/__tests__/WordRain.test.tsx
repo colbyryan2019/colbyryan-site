@@ -1,15 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import WordRain from '../WordRain'
+import WordRain, { BonusConfetti, BONUS_ANIMATION_MS } from '../WordRain'
+import { CHAR_WIDTH_PX, WORD_HORIZONTAL_PADDING_PX } from '@/lib/wordRain'
 
-// spawnWord makes three Math.random() calls per spawn: word pick, x
-// position, and fall duration. Forcing all of them to a tiny value picks
-// index 0 of the eligible pool every time, which is 'cat' while
-// maxWordLength stays at the starting difficulty (3) - words are filtered
-// and listed before letters, so index 0 is stable regardless of the
-// letter pool. x and fall duration both land near their range minimums.
+// spawnWord makes four Math.random() calls per spawn: fall duration, the
+// word-pool-vs-letter-pool draw, the pool index, and the x position.
+// Forcing all of them to a tiny value picks the words pool (the draw is
+// biased toward it) and index 0 of that pool every time, which is 'cat'
+// while maxWordLength stays at the starting difficulty (3). x lands near
+// the left edge of its safe range.
 function mockFirstWordInPool() {
   vi.spyOn(Math, 'random').mockReturnValue(0.001)
+}
+
+function mockContainerWidth(width: number) {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    width,
+    height: 0,
+    top: 0,
+    left: 0,
+    right: width,
+    bottom: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => {},
+  } as DOMRect)
 }
 
 function typeWord(word: string) {
@@ -189,5 +204,60 @@ describe('WordRain', () => {
     })
 
     expect(screen.getAllByLabelText('Falling word cat')).toHaveLength(2)
+  })
+
+  it('measures the real play area width and never positions a falling word so it would run off the right edge', () => {
+    mockContainerWidth(400)
+    render(<WordRain />)
+    dismissIntro()
+
+    act(() => {
+      vi.advanceTimersByTime(1500 * 5)
+    })
+
+    const items = screen.getAllByLabelText(/^Falling word /)
+    expect(items.length).toBeGreaterThan(0)
+    for (const item of items) {
+      const word = item.getAttribute('aria-label')!.replace('Falling word ', '')
+      const left = parseFloat(item.style.left)
+      const estimatedWidth = word.length * CHAR_WIDTH_PX + WORD_HORIZONTAL_PADDING_PX
+      expect(left + estimatedWidth).toBeLessThanOrEqual(400)
+    }
+    // Proves the measured 400px width is actually reaching spawnWord,
+    // rather than every word merely clamping to x=0 by coincidence.
+    expect(items.some((item) => parseFloat(item.style.left) > 0)).toBe(true)
+  })
+})
+
+describe('BonusConfetti', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    cleanup()
+  })
+
+  it('renders nothing when there is no bonus event', () => {
+    const { container } = render(<BonusConfetti event={null} onDone={() => {}} />)
+
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('shows a confetti burst and the bonus point total for a bonus event', () => {
+    render(<BonusConfetti event={{ x: 42, points: 250 }} onDone={() => {}} />)
+
+    expect(screen.getByText('+250')).toBeInTheDocument()
+    expect(document.querySelectorAll('.firework-particle').length).toBeGreaterThan(0)
+  })
+
+  it('calls onDone once the animation window elapses', () => {
+    vi.useFakeTimers()
+    const onDone = vi.fn()
+    render(<BonusConfetti event={{ x: 0, points: 250 }} onDone={onDone} />)
+
+    act(() => {
+      vi.advanceTimersByTime(BONUS_ANIMATION_MS)
+    })
+
+    expect(onDone).toHaveBeenCalled()
   })
 })
