@@ -114,6 +114,11 @@ export const games: GameEntry[] = [
     description: 'Type the falling words before they hit the bottom. Three lives, and it gets faster as you go.',
     href: '/games/word-rain',
   },
+  {
+    title: 'Colby Wordle',
+    description: 'Guess the secret word in six tries. Hint: it never changes.',
+    href: '/games/colby-wordle',
+  },
 ]
 
 export interface ProjectEntry {
