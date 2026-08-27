@@ -85,6 +85,108 @@ export const WORDS = [
   'sunshine',
   'elephant',
   'triangle',
+  'bed',
+  'cup',
+  'pen',
+  'red',
+  'box',
+  'egg',
+  'hat',
+  'ink',
+  'jar',
+  'log',
+  'map',
+  'net',
+  'pig',
+  'rug',
+  'van',
+  'web',
+  'bear',
+  'bird',
+  'boat',
+  'book',
+  'cake',
+  'door',
+  'duck',
+  'fish',
+  'frog',
+  'gift',
+  'gold',
+  'lamp',
+  'lion',
+  'milk',
+  'nest',
+  'road',
+  'rope',
+  'shoe',
+  'snow',
+  'song',
+  'tree',
+  'apple',
+  'beach',
+  'chair',
+  'chest',
+  'clock',
+  'coast',
+  'eagle',
+  'field',
+  'flame',
+  'glove',
+  'grape',
+  'heart',
+  'house',
+  'light',
+  'money',
+  'paint',
+  'river',
+  'robot',
+  'shark',
+  'shirt',
+  'stone',
+  'sword',
+  'table',
+  'tiger',
+  'train',
+  'water',
+  'basket',
+  'bottle',
+  'bridge',
+  'camera',
+  'candle',
+  'circle',
+  'desert',
+  'guitar',
+  'island',
+  'jacket',
+  'jungle',
+  'ladder',
+  'market',
+  'mirror',
+  'monkey',
+  'pencil',
+  'purple',
+  'rabbit',
+  'ribbon',
+  'silver',
+  'temple',
+  'turtle',
+  'valley',
+  'window',
+  'blanket',
+  'chicken',
+  'costume',
+  'holiday',
+  'kitchen',
+  'library',
+  'meadow',
+  'octopus',
+  'peacock',
+  'penguin',
+  'popcorn',
+  'pumpkin',
+  'rainbow',
+  'stadium',
+  'volcano',
 ]
 
 export const THEMED_WORDS = ['colby', 'ryan', 'union', 'panoramix']
@@ -103,6 +205,17 @@ export const WORD_PICK_CHANCE = 0.75
 
 export const BONUS_WORD = 'colby'
 export const BONUS_MULTIPLIER = 5
+// Extra copies of the bonus word added to the pick pool so it comes up
+// noticeably more often than any other single word, without guaranteeing it.
+export const BONUS_WORD_EXTRA_ENTRIES = 3
+
+export interface LeaderboardEntry {
+  initials: string
+  score: number
+}
+
+export const MAX_LEADERBOARD_ENTRIES = 5
+export const LEADERBOARD_STORAGE_KEY = 'word-rain-leaderboard'
 
 export function createInitialState(): WordRainState {
   return {
@@ -128,8 +241,13 @@ export function getDifficulty(score: number): Difficulty {
   }
 }
 
+export function buildWordPool(maxLength: number): string[] {
+  const words = [...WORDS, ...THEMED_WORDS, ...Array(BONUS_WORD_EXTRA_ENTRIES).fill(BONUS_WORD)]
+  return words.filter((word) => word.length <= maxLength)
+}
+
 function pickWord(maxLength: number): string {
-  const words = [...WORDS, ...THEMED_WORDS].filter((word) => word.length <= maxLength)
+  const words = buildWordPool(maxLength)
   const pool = words.length > 0 && Math.random() < WORD_PICK_CHANCE ? words : LETTERS
   return pool[Math.floor(Math.random() * pool.length)]
 }
@@ -201,4 +319,16 @@ export function resetGame(): WordRainState {
 
 export function clearBonusEvent(state: WordRainState): WordRainState {
   return { ...state, bonusEvent: null }
+}
+
+export function qualifiesForLeaderboard(leaderboard: LeaderboardEntry[], score: number): boolean {
+  if (leaderboard.length < MAX_LEADERBOARD_ENTRIES) return true
+  return score > Math.min(...leaderboard.map((entry) => entry.score))
+}
+
+export function addLeaderboardEntry(
+  leaderboard: LeaderboardEntry[],
+  entry: LeaderboardEntry,
+): LeaderboardEntry[] {
+  return [...leaderboard, entry].sort((a, b) => b.score - a.score).slice(0, MAX_LEADERBOARD_ENTRIES)
 }

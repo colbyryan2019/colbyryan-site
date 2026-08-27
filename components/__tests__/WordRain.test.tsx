@@ -1,7 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import WordRain, { BonusConfetti, BONUS_ANIMATION_MS } from '../WordRain'
-import { CHAR_WIDTH_PX, WORD_HORIZONTAL_PADDING_PX } from '@/lib/wordRain'
+import { CHAR_WIDTH_PX, WORD_HORIZONTAL_PADDING_PX, LEADERBOARD_STORAGE_KEY, type LeaderboardEntry } from '@/lib/wordRain'
+
+function seedLeaderboard(entries: LeaderboardEntry[]) {
+  localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(entries))
+}
+
+function mockVisualViewport(initialHeight: number) {
+  let listener: (() => void) | null = null
+  const vv = {
+    height: initialHeight,
+    addEventListener: (_event: string, cb: () => void) => {
+      listener = cb
+    },
+    removeEventListener: () => {
+      listener = null
+    },
+  }
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: vv })
+  return {
+    resize(height: number) {
+      vv.height = height
+      act(() => listener?.())
+    },
+    cleanup() {
+      Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined })
+    },
+  }
+}
 
 // spawnWord makes four Math.random() calls per spawn: fall duration, the
 // word-pool-vs-letter-pool draw, the pool index, and the x position.
@@ -67,6 +94,7 @@ function tick(totalMs: number, stepMs = 200) {
 describe('WordRain', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -226,6 +254,63 @@ describe('WordRain', () => {
     // Proves the measured 400px width is actually reaching spawnWord,
     // rather than every word merely clamping to x=0 by coincidence.
     expect(items.some((item) => parseFloat(item.style.left) > 0)).toBe(true)
+  })
+
+  it('lets a mobile player type via the hidden text input, just like the physical keyboard', () => {
+    mockFirstWordInPool()
+    render(<WordRain />)
+    dismissIntro()
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+
+    const hiddenInput = screen.getByLabelText('Type the falling words')
+    for (const char of 'cat') {
+      fireEvent.change(hiddenInput, { target: { value: char } })
+    }
+
+    expect(screen.queryByLabelText('Falling word cat')).not.toBeInTheDocument()
+    expect(screen.getByText('Score: 30')).toBeInTheDocument()
+  })
+
+  it('prompts for initials when a finished score qualifies for the leaderboard, and saves it', () => {
+    mockFirstWordInPool()
+    render(<WordRain />)
+
+    tick(INTRO_DURATION_MS + 3 * (1500 + 4200) + 2000)
+
+    const initialsInput = screen.getByLabelText(/enter your initials/i)
+    fireEvent.change(initialsInput, { target: { value: 'abc' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }))
+
+    expect(screen.getByText('ABC')).toBeInTheDocument()
+    const saved = JSON.parse(localStorage.getItem(LEADERBOARD_STORAGE_KEY)!)
+    expect(saved).toEqual([{ initials: 'ABC', score: 0 }])
+  })
+
+  it('skips the initials prompt for a score that does not qualify, but still shows the leaderboard', () => {
+    seedLeaderboard(
+      Array.from({ length: 5 }, (_, i) => ({ initials: 'AAA', score: 100 + i })),
+    )
+    mockFirstWordInPool()
+    render(<WordRain />)
+
+    tick(INTRO_DURATION_MS + 3 * (1500 + 4200) + 2000)
+
+    expect(screen.queryByLabelText(/enter your initials/i)).not.toBeInTheDocument()
+    expect(screen.getAllByText('AAA')).toHaveLength(5)
+  })
+
+  it('shrinks the play area height to fit above the on-screen keyboard when the visual viewport shrinks', () => {
+    const viewport = mockVisualViewport(800)
+    const { container } = render(<WordRain />)
+
+    viewport.resize(300)
+
+    const gameArea = container.firstElementChild as HTMLElement
+    expect(gameArea.style.height).toBe('220px')
+
+    viewport.cleanup()
   })
 })
 

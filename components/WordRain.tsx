@@ -3,15 +3,19 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react'
 import KitchenScene from './KitchenScene'
 import {
+  LEADERBOARD_STORAGE_KEY,
   MAX_LIVES,
+  addLeaderboardEntry,
   clearBonusEvent,
   createInitialState,
   getDifficulty,
   missWord,
+  qualifiesForLeaderboard,
   resetGame,
   spawnWord,
   typeChar,
   type BonusEvent,
+  type LeaderboardEntry,
   type WordRainState,
 } from '@/lib/wordRain'
 
@@ -19,6 +23,13 @@ const INTRO_DURATION_MS = 2500
 export const BONUS_ANIMATION_MS = 900
 const BONUS_PARTICLES = 10
 const BONUS_COLORS = ['bg-accent', 'bg-pink-400', 'bg-yellow-300', 'bg-emerald-400']
+const INITIALS_LENGTH = 3
+
+// Fraction of the visible viewport (above any on-screen keyboard) the play
+// area should fill, clamped so it never gets too cramped or too tall.
+const VIEWPORT_HEIGHT_FRACTION = 0.7
+const MIN_GAME_HEIGHT_PX = 220
+const MAX_GAME_HEIGHT_PX = 600
 
 type Action =
   | { type: 'spawn'; containerWidth: number }
@@ -71,10 +82,17 @@ export default function WordRain() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState)
   const [showIntro, setShowIntro] = useState(true)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [leaderboardHydrated, setLeaderboardHydrated] = useState(false)
+  const [initials, setInitials] = useState('')
+  const [scoreSubmitted, setScoreSubmitted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hiddenInputRef = useRef<HTMLInputElement>(null)
   const missTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>())
 
   const { level, spawnIntervalMs } = getDifficulty(state.score)
+  const qualifiesForBoard = state.finished && !scoreSubmitted && qualifiesForLeaderboard(leaderboard, state.score)
 
   useEffect(() => {
     function measure() {
@@ -85,6 +103,37 @@ export default function WordRain() {
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
   }, [])
+
+  // Tracks the visible viewport (which shrinks when a mobile on-screen
+  // keyboard opens) so the play area can be resized to stay above it.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    function update() {
+      setViewportHeight(vv!.height)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    return () => vv.removeEventListener('resize', update)
+  }, [])
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(LEADERBOARD_STORAGE_KEY)
+    if (raw) {
+      try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration guard: must set after mount to avoid SSR/client mismatch
+        setLeaderboard(JSON.parse(raw) as LeaderboardEntry[])
+      } catch {
+        // ignore malformed storage and start fresh
+      }
+    }
+    setLeaderboardHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!leaderboardHydrated) return
+    window.localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboard))
+  }, [leaderboard, leaderboardHydrated])
 
   useEffect(() => {
     if (!showIntro) return
@@ -146,11 +195,49 @@ export default function WordRain() {
     [state.lives],
   )
 
+  const dynamicHeightPx =
+    viewportHeight != null
+      ? Math.max(MIN_GAME_HEIGHT_PX, Math.min(MAX_GAME_HEIGHT_PX, viewportHeight * VIEWPORT_HEIGHT_FRACTION))
+      : null
+
+  function focusHiddenInput() {
+    if (state.finished) return
+    hiddenInputRef.current?.focus()
+  }
+
+  function submitInitials(event: React.FormEvent) {
+    event.preventDefault()
+    const trimmed = initials.trim().toUpperCase().slice(0, INITIALS_LENGTH)
+    if (!trimmed) return
+    setLeaderboard((prev) => addLeaderboardEntry(prev, { initials: trimmed, score: state.score }))
+    setScoreSubmitted(true)
+  }
+
   return (
     <div
       ref={containerRef}
-      className="relative left-1/2 -mt-16 -mb-16 h-[70vh] max-h-[600px] w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950"
+      onClick={focusHiddenInput}
+      style={dynamicHeightPx != null ? { height: `${dynamicHeightPx}px` } : undefined}
+      className={`relative left-1/2 -mt-16 -mb-16 ${dynamicHeightPx == null ? 'h-[70vh] max-h-[600px]' : ''} w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950`}
     >
+      <input
+        ref={hiddenInputRef}
+        aria-label="Type the falling words"
+        className="absolute h-px w-px overflow-hidden opacity-0"
+        style={{ fontSize: '16px' }}
+        type="text"
+        inputMode="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        tabIndex={-1}
+        onChange={(event) => {
+          const char = event.target.value.slice(-1)
+          if (char) dispatch({ type: 'type', char })
+          event.target.value = ''
+        }}
+      />
       <KitchenScene />
       <span className="pointer-events-none absolute left-4 top-3 z-10 text-sm font-medium text-gray-700 dark:text-gray-300">
         Score: {state.score}
@@ -180,14 +267,51 @@ export default function WordRain() {
       )}
 
       {state.finished && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white/90 dark:bg-gray-950/90">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto bg-white/90 py-6 dark:bg-gray-950/90">
           <h1 className="text-3xl font-bold tracking-tight">Word Rain</h1>
           <p className="text-xl font-bold text-accent">Final score: {state.score}</p>
+
+          {qualifiesForBoard ? (
+            <form onSubmit={submitInitials} className="flex flex-col items-center gap-2">
+              <label htmlFor="word-rain-initials" className="text-sm font-medium">
+                New high score! Enter your initials:
+              </label>
+              <input
+                id="word-rain-initials"
+                value={initials}
+                onChange={(event) => setInitials(event.target.value)}
+                maxLength={INITIALS_LENGTH}
+                autoFocus
+                className="w-20 rounded border border-gray-300 px-2 py-1 text-center text-lg font-bold uppercase tracking-widest dark:border-gray-700"
+              />
+              <button
+                type="submit"
+                className="rounded-full border border-accent px-4 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-gray-950"
+              >
+                Submit
+              </button>
+            </form>
+          ) : (
+            leaderboard.length > 0 && (
+              <ol className="w-48 text-sm">
+                {leaderboard.map((entry, i) => (
+                  <li key={i} className="flex justify-between gap-2">
+                    <span>{i + 1}.</span>
+                    <span className="flex-1">{entry.initials}</span>
+                    <span>{entry.score}</span>
+                  </li>
+                ))}
+              </ol>
+            )
+          )}
+
           <button
             type="button"
             onClick={() => {
               dispatch({ type: 'reset' })
               setShowIntro(true)
+              setInitials('')
+              setScoreSubmitted(false)
             }}
             className="rounded-full border border-accent px-5 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-gray-950"
           >

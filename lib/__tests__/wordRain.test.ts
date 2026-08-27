@@ -16,8 +16,14 @@ import {
   WORD_PICK_CHANCE,
   BONUS_WORD,
   BONUS_MULTIPLIER,
+  BONUS_WORD_EXTRA_ENTRIES,
+  buildWordPool,
+  MAX_LEADERBOARD_ENTRIES,
+  qualifiesForLeaderboard,
+  addLeaderboardEntry,
   type WordRainState,
   type FallingWord,
+  type LeaderboardEntry,
 } from '../wordRain'
 
 const DEFAULT_FALL_MS = 5000
@@ -381,6 +387,71 @@ describe('wordRain', () => {
 
     it('includes colby as the bonus word', () => {
       expect(THEMED_WORDS).toContain(BONUS_WORD)
+    })
+
+    it('offers a substantially larger pool of words than the original library', () => {
+      expect(WORDS.length).toBeGreaterThanOrEqual(90)
+      expect(new Set(WORDS).size).toBe(WORDS.length)
+    })
+  })
+
+  describe('buildWordPool', () => {
+    it('weights the bonus word so it appears more often than any other single word', () => {
+      const pool = buildWordPool(10)
+      const bonusCount = pool.filter((word) => word === BONUS_WORD).length
+      const otherCount = pool.filter((word) => word === WORDS[0]).length
+
+      expect(bonusCount).toBe(1 + BONUS_WORD_EXTRA_ENTRIES)
+      expect(bonusCount).toBeGreaterThan(otherCount)
+    })
+
+    it('still respects the max word length filter for the bonus word', () => {
+      const pool = buildWordPool(BONUS_WORD.length - 1)
+
+      expect(pool).not.toContain(BONUS_WORD)
+    })
+  })
+
+  describe('leaderboard', () => {
+    function entry(initials: string, score: number): LeaderboardEntry {
+      return { initials, score }
+    }
+
+    describe('qualifiesForLeaderboard', () => {
+      it('qualifies any score while the board has not reached its max size', () => {
+        expect(qualifiesForLeaderboard([], 10)).toBe(true)
+      })
+
+      it('qualifies a score higher than the current lowest entry on a full board', () => {
+        const board = Array.from({ length: MAX_LEADERBOARD_ENTRIES }, (_, i) => entry('AAA', (i + 1) * 100))
+
+        expect(qualifiesForLeaderboard(board, 150)).toBe(true)
+      })
+
+      it('rejects a score that would not beat the lowest entry on a full board', () => {
+        const board = Array.from({ length: MAX_LEADERBOARD_ENTRIES }, (_, i) => entry('AAA', (i + 1) * 100))
+
+        expect(qualifiesForLeaderboard(board, 100)).toBe(false)
+      })
+    })
+
+    describe('addLeaderboardEntry', () => {
+      it('inserts a new entry sorted into descending score order', () => {
+        const board = [entry('AAA', 300), entry('BBB', 100)]
+
+        const next = addLeaderboardEntry(board, entry('CCC', 200))
+
+        expect(next).toEqual([entry('AAA', 300), entry('CCC', 200), entry('BBB', 100)])
+      })
+
+      it('caps the board at the max entry count, dropping the lowest score', () => {
+        const board = Array.from({ length: MAX_LEADERBOARD_ENTRIES }, (_, i) => entry('AAA', (i + 1) * 100))
+
+        const next = addLeaderboardEntry(board, entry('ZZZ', 250))
+
+        expect(next).toHaveLength(MAX_LEADERBOARD_ENTRIES)
+        expect(next.map((e) => e.score)).toEqual([500, 400, 300, 250, 200])
+      })
     })
   })
 })
