@@ -115,7 +115,7 @@ export const games: GameEntry[] = [
     href: '/games/word-rain',
   },
   {
-    title: 'Colby Wordle',
+    title: 'Colbordle',
     description: 'Guess the secret word in six tries.',
     href: '/games/colby-wordle',
   },
