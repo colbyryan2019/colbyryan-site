@@ -6,7 +6,7 @@ function mockDeterministicSpawns() {
   let call = 0
   vi.spyOn(Math, 'random').mockImplementation(() => {
     call += 1
-    return call % 2 === 1 ? 0.5 : 0 // x position: mid-screen; letter: always index 0 (C)
+    return call % 2 === 1 ? 0 : 0.5 // letter: always index 0 (C); x within its band: midpoint roll
   })
 }
 
@@ -18,15 +18,16 @@ function popRound() {
   fireEvent.click(bubble)
 }
 
-// Spawns letters C, O, L, B, Y in that order, each at a strictly increasing
-// x position, so popping each bubble as soon as it appears both collects
-// them in COLBY order and lands them left-to-right - a perfect spell.
+// Spawns letters C, O, L, B, Y in that order, each rolled to the low end of
+// its own left-to-right position band (0, 20, 25, 30, 50), so popping each
+// bubble as soon as it appears both collects them in COLBY order and lands
+// them left-to-right - a perfect spell.
 function mockPerfectSpawnOrder() {
   let call = 0
   vi.spyOn(Math, 'random').mockImplementation(() => {
     call += 1
     const pairIndex = Math.floor((call - 1) / 2)
-    return call % 2 === 1 ? Math.min(0.99, (pairIndex + 1) * 0.15) : pairIndex / 5
+    return call % 2 === 1 ? pairIndex / 5 : 0
   })
 }
 

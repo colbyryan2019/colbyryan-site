@@ -28,9 +28,28 @@ export function createInitialState(sequence: string[]): BubbleGameState {
   }
 }
 
-export function spawnBubble(state: BubbleGameState, x: number): BubbleGameState {
+// Horizontal spawn bands per letter, trending left-to-right so a bubble's
+// letter and its position are no longer independent - biasing (without
+// guaranteeing) the popped letters to already sort into COLBY order.
+export const LETTER_X_RANGES: Record<string, [number, number]> = {
+  C: [0, 50],
+  O: [20, 70],
+  L: [25, 75],
+  B: [30, 80],
+  Y: [50, 100],
+}
+
+function randomXForLetter(letter: string): number {
+  const range = LETTER_X_RANGES[letter]
+  if (!range) return Math.random() * 100
+  const [min, max] = range
+  return min + Math.random() * (max - min)
+}
+
+export function spawnBubble(state: BubbleGameState): BubbleGameState {
   if (state.finished) return state
   const letter = state.sequence[Math.floor(Math.random() * state.sequence.length)]
+  const x = randomXForLetter(letter)
   const bubble: Bubble = { id: state.nextId, x, letter }
   return { ...state, bubbles: [...state.bubbles, bubble], nextId: state.nextId + 1 }
 }

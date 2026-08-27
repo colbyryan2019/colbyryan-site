@@ -6,6 +6,7 @@ import {
   expireBubble,
   resetGame,
   getResultWord,
+  LETTER_X_RANGES,
   type Bubble,
   type BubbleGameState,
 } from '../bubbleBurst'
@@ -27,13 +28,12 @@ describe('bubbleBurst', () => {
     expect(state.finished).toBe(false)
   })
 
-  it('spawns a bubble with a letter from the sequence at the given position', () => {
+  it('spawns a bubble with a letter from the sequence', () => {
     const state = createInitialState(['C', 'O'])
 
-    const next = spawnBubble(state, 42)
+    const next = spawnBubble(state)
 
     expect(next.bubbles).toHaveLength(1)
-    expect(next.bubbles[0].x).toBe(42)
     expect(state.sequence).toContain(next.bubbles[0].letter)
   })
 
@@ -41,9 +41,9 @@ describe('bubbleBurst', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     let state = createInitialState(['C', 'O', 'L'])
 
-    state = spawnBubble(state, 10)
-    state = spawnBubble(state, 20)
-    state = spawnBubble(state, 30)
+    state = spawnBubble(state)
+    state = spawnBubble(state)
+    state = spawnBubble(state)
 
     expect(state.bubbles.map((b) => b.letter)).toEqual(['C', 'C', 'C'])
   })
@@ -51,9 +51,41 @@ describe('bubbleBurst', () => {
   it('does not spawn bubbles once the game is finished', () => {
     const state = { ...createInitialState(['C']), finished: true }
 
-    const next = spawnBubble(state, 42)
+    const next = spawnBubble(state)
 
     expect(next.bubbles).toEqual([])
+  })
+
+  describe('letter position bands', () => {
+    it.each(Object.entries(LETTER_X_RANGES))('keeps %s within its %j band across many spawns', (letter, [min, max]) => {
+      const state = createInitialState([letter])
+
+      for (let i = 0; i < 50; i++) {
+        const next = spawnBubble(state)
+        expect(next.bubbles[0].x).toBeGreaterThanOrEqual(min)
+        expect(next.bubbles[0].x).toBeLessThanOrEqual(max)
+      }
+    })
+
+    it('falls back to the full width for a letter with no configured band', () => {
+      const state = createInitialState(['Z'])
+
+      for (let i = 0; i < 50; i++) {
+        const next = spawnBubble(state)
+        expect(next.bubbles[0].x).toBeGreaterThanOrEqual(0)
+        expect(next.bubbles[0].x).toBeLessThanOrEqual(100)
+      }
+    })
+
+    it('defines the expected COLBY bands, trending left-to-right', () => {
+      expect(LETTER_X_RANGES).toEqual({
+        C: [0, 50],
+        O: [20, 70],
+        L: [25, 75],
+        B: [30, 80],
+        Y: [50, 100],
+      })
+    })
   })
 
   it('popping any bubble collects its letter and removes it, regardless of which letter it is', () => {

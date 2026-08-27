@@ -19,7 +19,7 @@ const MAX_BUBBLES = 6
 const FLOAT_DURATION_MS = 2200
 
 type Action =
-  | { type: 'spawn'; x: number }
+  | { type: 'spawn' }
   | { type: 'pop'; id: number; letter: string; x: number }
   | { type: 'expire'; id: number }
   | { type: 'reset' }
@@ -27,7 +27,7 @@ type Action =
 function reducer(state: BubbleGameState, action: Action): BubbleGameState {
   switch (action.type) {
     case 'spawn':
-      return state.bubbles.length >= MAX_BUBBLES ? state : spawnBubble(state, action.x)
+      return state.bubbles.length >= MAX_BUBBLES ? state : spawnBubble(state)
     case 'pop':
       return popBubble(state, action.id, action.letter, action.x)
     case 'expire':
@@ -98,7 +98,7 @@ export default function BubbleBurst() {
   useEffect(() => {
     if (state.finished) return
     const interval = setInterval(() => {
-      dispatch({ type: 'spawn', x: Math.random() * 100 })
+      dispatch({ type: 'spawn' })
     }, SPAWN_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [state.finished])
