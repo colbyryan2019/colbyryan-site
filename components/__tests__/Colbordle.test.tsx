@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import ColbyWordle from '../ColbyWordle'
-import { dateKey, statsStorageKey, type WordleStats } from '@/lib/colbyWordle'
+import Colbordle from '../Colbordle'
+import { dateKey, statsStorageKey, type WordleStats } from '@/lib/colbordle'
 
 function typeWord(word: string) {
   for (const char of word) {
@@ -23,7 +23,7 @@ function seedStats(stats: WordleStats) {
   localStorage.setItem(statsStorageKey(), JSON.stringify(stats))
 }
 
-describe('ColbyWordle', () => {
+describe('Colbordle', () => {
   beforeEach(() => {
     localStorage.clear()
   })
@@ -33,13 +33,13 @@ describe('ColbyWordle', () => {
   })
 
   it('does not show the title while a round is actively being played', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     expect(screen.queryByRole('heading', { name: 'Colbordle' })).not.toBeInTheDocument()
   })
 
   it('fills the first guess row as letters are typed', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     typeWord('col')
 
@@ -50,7 +50,7 @@ describe('ColbyWordle', () => {
   })
 
   it('removes the last typed letter on backspace', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('col')
 
     fireEvent.keyDown(window, { key: 'Backspace' })
@@ -59,7 +59,7 @@ describe('ColbyWordle', () => {
   })
 
   it('does not submit a guess shorter than five letters', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('col')
 
     submit()
@@ -68,7 +68,7 @@ describe('ColbyWordle', () => {
   })
 
   it('evaluates a submitted guess letter by letter', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('zzzzz')
     submit()
 
@@ -78,7 +78,7 @@ describe('ColbyWordle', () => {
   })
 
   it('colors the on-screen keyboard to match the best status seen for each letter', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('zzzzz')
     submit()
 
@@ -86,7 +86,7 @@ describe('ColbyWordle', () => {
   })
 
   it('lets the on-screen keyboard type letters just like the physical keyboard', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     fireEvent.click(screen.getByRole('button', { name: 'C' }))
 
@@ -94,7 +94,7 @@ describe('ColbyWordle', () => {
   })
 
   it('shows the win screen once the guess matches the answer', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('colby')
     submit()
 
@@ -103,7 +103,7 @@ describe('ColbyWordle', () => {
   })
 
   it('stops accepting input once the game is won', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('colby')
     submit()
 
@@ -113,7 +113,7 @@ describe('ColbyWordle', () => {
   })
 
   it('shows the loss screen revealing the answer after six wrong guesses', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     for (let i = 0; i < 6; i++) {
       typeWord('zzzzz')
       submit()
@@ -124,31 +124,31 @@ describe('ColbyWordle', () => {
   })
 
   it('remembers a finished game across remounts on the same day', () => {
-    const { unmount } = render(<ColbyWordle />)
+    const { unmount } = render(<Colbordle />)
     typeWord('colby')
     submit()
     unmount()
 
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     expect(screen.getByRole('heading', { name: 'Colbordle' })).toBeInTheDocument()
     expect(screen.getByText(/got it in 1\/6/i)).toBeInTheDocument()
   })
 
   it('remembers in-progress guesses across remounts on the same day', () => {
-    const { unmount } = render(<ColbyWordle />)
+    const { unmount } = render(<Colbordle />)
     typeWord('zzzzz')
     submit()
     unmount()
 
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     expect(screen.getByLabelText('Row 1 letter 1: Z, absent')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Colbordle' })).not.toBeInTheDocument()
   })
 
   it('records a streak of one and 100% win rate after the first-ever win', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('colby')
     submit()
 
@@ -159,7 +159,7 @@ describe('ColbyWordle', () => {
   })
 
   it('records a loss without starting a streak', () => {
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     for (let i = 0; i < 6; i++) {
       typeWord('zzzzz')
       submit()
@@ -173,7 +173,7 @@ describe('ColbyWordle', () => {
   it('extends the streak when yesterday was also won', () => {
     seedStats({ gamesPlayed: 1, gamesWon: 1, currentStreak: 1, maxStreak: 1, lastPlayedDate: daysAgo(1) })
 
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('colby')
     submit()
 
@@ -185,7 +185,7 @@ describe('ColbyWordle', () => {
   it('resets the streak to one after skipping a day, keeping the prior max', () => {
     seedStats({ gamesPlayed: 4, gamesWon: 4, currentStreak: 4, maxStreak: 4, lastPlayedDate: daysAgo(3) })
 
-    render(<ColbyWordle />)
+    render(<Colbordle />)
     typeWord('colby')
     submit()
 
@@ -194,12 +194,12 @@ describe('ColbyWordle', () => {
   })
 
   it('does not double-count stats when remounted after finishing the same day', () => {
-    const { unmount } = render(<ColbyWordle />)
+    const { unmount } = render(<Colbordle />)
     typeWord('colby')
     submit()
     unmount()
 
-    render(<ColbyWordle />)
+    render(<Colbordle />)
 
     expect(screen.getByLabelText('Played: 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Streak: 1')).toBeInTheDocument()

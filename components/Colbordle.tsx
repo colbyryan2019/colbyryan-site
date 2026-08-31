@@ -14,18 +14,18 @@ import {
   storageKey,
   submitGuess,
   updateStats,
-  type ColbyWordleState,
+  type ColbordleState,
   type LetterStatus,
   type WordleStats,
-} from '@/lib/colbyWordle'
+} from '@/lib/colbordle'
 
 type Action =
   | { type: 'type'; letter: string }
   | { type: 'backspace' }
   | { type: 'submit' }
-  | { type: 'restore'; state: ColbyWordleState }
+  | { type: 'restore'; state: ColbordleState }
 
-function reducer(state: ColbyWordleState, action: Action): ColbyWordleState {
+function reducer(state: ColbordleState, action: Action): ColbordleState {
   switch (action.type) {
     case 'type':
       return addLetter(state, action.letter)
@@ -60,7 +60,7 @@ function tileLabel(row: number, col: number, letter: string | undefined, status:
   return `Row ${row + 1} letter ${col + 1}: ${letter.toUpperCase()}${suffix}`
 }
 
-export default function ColbyWordle() {
+export default function Colbordle() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState)
   const [stats, setStats] = useState<WordleStats>(createInitialStats)
   const [hydrated, setHydrated] = useState(false)
@@ -69,7 +69,7 @@ export default function ColbyWordle() {
     const raw = window.localStorage.getItem(storageKey())
     if (raw) {
       try {
-        dispatch({ type: 'restore', state: JSON.parse(raw) as ColbyWordleState })
+        dispatch({ type: 'restore', state: JSON.parse(raw) as ColbordleState })
       } catch {
         // ignore malformed storage and start fresh
       }

@@ -2,7 +2,7 @@ export type LetterStatus = 'correct' | 'present' | 'absent'
 
 export type GameStatus = 'playing' | 'won' | 'lost'
 
-export interface ColbyWordleState {
+export interface ColbordleState {
   guesses: string[]
   results: LetterStatus[][]
   currentGuess: string
@@ -29,14 +29,14 @@ export function dateKey(date: Date = new Date()): string {
 }
 
 export function storageKey(date: Date = new Date()): string {
-  return `colby-wordle-${dateKey(date)}`
+  return `colbordle-${dateKey(date)}`
 }
 
 export function statsStorageKey(): string {
-  return 'colby-wordle-stats'
+  return 'colbordle-stats'
 }
 
-export function createInitialState(): ColbyWordleState {
+export function createInitialState(): ColbordleState {
   return { guesses: [], results: [], currentGuess: '', status: 'playing' }
 }
 
@@ -89,7 +89,7 @@ export function evaluateGuess(guess: string, answer: string): LetterStatus[] {
   return result
 }
 
-export function addLetter(state: ColbyWordleState, letter: string): ColbyWordleState {
+export function addLetter(state: ColbordleState, letter: string): ColbordleState {
   if (state.status !== 'playing') return state
   if (state.currentGuess.length >= WORD_LENGTH) return state
   if (!/^[a-zA-Z]$/.test(letter)) return state
@@ -97,14 +97,14 @@ export function addLetter(state: ColbyWordleState, letter: string): ColbyWordleS
   return { ...state, currentGuess: state.currentGuess + letter.toLowerCase() }
 }
 
-export function removeLetter(state: ColbyWordleState): ColbyWordleState {
+export function removeLetter(state: ColbordleState): ColbordleState {
   if (state.status !== 'playing') return state
   if (state.currentGuess.length === 0) return state
 
   return { ...state, currentGuess: state.currentGuess.slice(0, -1) }
 }
 
-export function submitGuess(state: ColbyWordleState): ColbyWordleState {
+export function submitGuess(state: ColbordleState): ColbordleState {
   if (state.status !== 'playing') return state
   if (state.currentGuess.length !== WORD_LENGTH) return state
 

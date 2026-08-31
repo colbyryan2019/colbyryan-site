@@ -13,11 +13,11 @@ import {
   ANSWER,
   WORD_LENGTH,
   MAX_GUESSES,
-  type ColbyWordleState,
+  type ColbordleState,
   type WordleStats,
-} from '../colbyWordle'
+} from '../colbordle'
 
-describe('colbyWordle', () => {
+describe('colbordle', () => {
   describe('createInitialState', () => {
     it('starts with no guesses, an empty current guess, and playing status', () => {
       const state = createInitialState()
@@ -92,7 +92,7 @@ describe('colbyWordle', () => {
     })
 
     it('does nothing once the game is no longer playing', () => {
-      const state: ColbyWordleState = { ...createInitialState(), status: 'won' }
+      const state: ColbordleState = { ...createInitialState(), status: 'won' }
 
       expect(addLetter(state, 'c')).toEqual(state)
     })
@@ -112,7 +112,7 @@ describe('colbyWordle', () => {
     })
 
     it('does nothing once the game is no longer playing', () => {
-      const state: ColbyWordleState = { ...createInitialState(), currentGuess: 'col', status: 'lost' }
+      const state: ColbordleState = { ...createInitialState(), currentGuess: 'col', status: 'lost' }
 
       expect(removeLetter(state)).toEqual(state)
     })
@@ -166,7 +166,7 @@ describe('colbyWordle', () => {
     })
 
     it('does nothing once the game is no longer playing', () => {
-      const state: ColbyWordleState = { ...createInitialState(), currentGuess: 'zzzzz', status: 'won' }
+      const state: ColbordleState = { ...createInitialState(), currentGuess: 'zzzzz', status: 'won' }
 
       expect(submitGuess(state)).toEqual(state)
     })
@@ -174,7 +174,7 @@ describe('colbyWordle', () => {
 
   describe('storageKey', () => {
     it('formats a zero-padded local date into the key', () => {
-      expect(storageKey(new Date(2026, 0, 5))).toBe('colby-wordle-2026-01-05')
+      expect(storageKey(new Date(2026, 0, 5))).toBe('colbordle-2026-01-05')
     })
 
     it('produces a different key for a different day', () => {
@@ -197,7 +197,7 @@ describe('colbyWordle', () => {
 
   describe('statsStorageKey', () => {
     it('is a single key, not date-scoped', () => {
-      expect(statsStorageKey()).toBe('colby-wordle-stats')
+      expect(statsStorageKey()).toBe('colbordle-stats')
     })
   })
 
