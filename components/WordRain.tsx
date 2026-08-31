@@ -200,11 +200,6 @@ export default function WordRain() {
       ? Math.max(MIN_GAME_HEIGHT_PX, Math.min(MAX_GAME_HEIGHT_PX, viewportHeight * VIEWPORT_HEIGHT_FRACTION))
       : null
 
-  function focusHiddenInput() {
-    if (state.finished) return
-    hiddenInputRef.current?.focus()
-  }
-
   function submitInitials(event: React.FormEvent) {
     event.preventDefault()
     const trimmed = initials.trim().toUpperCase().slice(0, INITIALS_LENGTH)
@@ -216,14 +211,18 @@ export default function WordRain() {
   return (
     <div
       ref={containerRef}
-      onClick={focusHiddenInput}
       style={dynamicHeightPx != null ? { height: `${dynamicHeightPx}px` } : undefined}
       className={`relative left-1/2 -mt-16 -mb-16 ${dynamicHeightPx == null ? 'h-[70vh] max-h-[600px]' : ''} w-screen -translate-x-1/2 overflow-hidden border-y border-gray-200 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-amber-950`}
     >
+      {/* Covers the whole play area so a tap's focus lands on this input
+          directly (native tap-to-focus), rather than via a JS .focus() call
+          on a near-invisible target - the latter is unreliable at opening
+          the on-screen keyboard on iOS Safari. Sits below the finished-round
+          overlay (z-40) so it can't swallow taps meant for Play Again/initials. */}
       <input
         ref={hiddenInputRef}
         aria-label="Type the falling words"
-        className="absolute h-px w-px overflow-hidden opacity-0"
+        className="absolute inset-0 z-30 h-full w-full opacity-0"
         style={{ fontSize: '16px' }}
         type="text"
         inputMode="text"
@@ -267,7 +266,7 @@ export default function WordRain() {
       )}
 
       {state.finished && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 overflow-y-auto bg-white/90 py-6 dark:bg-gray-950/90">
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 overflow-y-auto bg-white/90 py-6 dark:bg-gray-950/90">
           <h1 className="text-3xl font-bold tracking-tight">Word Rain</h1>
           <p className="text-xl font-bold text-accent">Final score: {state.score}</p>
 
