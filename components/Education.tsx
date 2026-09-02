@@ -3,14 +3,11 @@ import { education } from '@/lib/content'
 
 export default function Education() {
   return (
-    <section id="education" className="fade-in-section scroll-mt-24 space-y-10">
-      <h2 className="text-3xl font-bold tracking-tight">Education</h2>
-      <ol className="space-y-10">
+    <section id="education" className="fade-in-section scroll-mt-24 space-y-6">
+      <h2 className="text-xl font-semibold tracking-tight text-gray-600 dark:text-gray-400">Education</h2>
+      <ol className="space-y-6">
         {education.map((entry) => (
-          <li
-            key={entry.school}
-            className="rounded-xl border border-gray-200 p-6 transition-colors hover:border-accent dark:border-gray-800"
-          >
+          <li key={entry.school} className="rounded-xl border border-gray-100 p-6 dark:border-gray-900">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 {entry.logo && (

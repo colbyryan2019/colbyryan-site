@@ -33,21 +33,19 @@ export default function AboutIntro() {
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
           <Link
-            href="#experience"
+            href="#projects"
             className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
           >
-            Experience
-          </Link>
-          <Link
-            href="#education"
-            className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"
-          >
-            Education
+            Projects
           </Link>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 text-sm sm:justify-start">
-          <Link href="#projects" className="transition-colors hover:text-accent">
-            Projects
+          <Link href="#experience" className="transition-colors hover:text-accent">
+            Experience
+          </Link>
+          <span>·</span>
+          <Link href="#education" className="transition-colors hover:text-accent">
+            Education
           </Link>
         </div>
       </div>

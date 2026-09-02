@@ -9,7 +9,7 @@ import { contact } from '@/lib/content'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    "Software Engineer at Panoramix Financial in New York City, Union College '24 grad in Computer Science and Mathematics. Experience, education, and projects.",
+    "Software Engineer at Panoramix Financial in New York City, Union College '24 grad in Computer Science and Mathematics. Projects, experience, and education.",
   alternates: { canonical: '/about' },
 }
 
@@ -18,9 +18,9 @@ export default function AboutPage() {
     <div className="space-y-20">
       <AboutIntro />
       <About />
+      <Projects />
       <Experience />
       <Education />
-      <Projects />
       <section className="fade-in-section flex justify-center">
         <a
           href={contact.resumeHref}
