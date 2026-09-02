@@ -9,18 +9,16 @@ export default function About() {
           Science and Mathematics.
         </p>
         <p>
-          At Panoramix, I led development of FacetAI, an AI-powered assistant we
+          At Panoramix, I helped lead the development of FacetAI, an AI-powered assistant we
           announced at the T3 conference. I&apos;ve also built full-stack features like a
           Retrieval-Augmented Generation bot, a nearest-neighbor search system for
           retrieving embedded text, and tools for managing investment models.
         </p>
         <p>
-          Before that, I interned in data science at PanAgora Asset Management and
-          worked on HPC storage performance at TandemAI. I also spent a gap year in
-          Barcelona, Spain after high school, where I got my TEFL certification and
+          I also spent a gap year in Barcelona, Spain after high school, where I got my TEFL certification and
           taught English.
         </p>
-        <p>Outside of work, I build mobile apps, travel, and play soccer, basketball, and chess.</p>
+        <p>In my free time, I enjoy building mobile apps, traveling, and I play soccer, trivia with friends, and chess.</p>
       </div>
     </section>
   )
