@@ -215,7 +215,7 @@ export interface LeaderboardEntry {
 }
 
 export const MAX_LEADERBOARD_ENTRIES = 5
-export const LEADERBOARD_STORAGE_KEY = 'word-rain-leaderboard'
+export const INITIALS_LENGTH = 3
 
 export function createInitialState(): WordRainState {
   return {

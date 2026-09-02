@@ -32,14 +32,6 @@ export default function AboutIntro() {
           </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
-          <a
-            href={contact.resumeHref}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full border border-accent bg-accent px-8 py-3 text-base font-semibold text-gray-950 transition-colors hover:bg-transparent hover:text-accent"
-          >
-            Resume
-          </a>
           <Link
             href="#experience"
             className="rounded-full border border-accent px-8 py-3 text-base font-semibold text-accent transition-colors hover:bg-accent hover:text-gray-950"

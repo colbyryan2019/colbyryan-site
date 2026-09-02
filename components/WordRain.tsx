@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react'
 import KitchenScene from './KitchenScene'
 import {
-  LEADERBOARD_STORAGE_KEY,
+  INITIALS_LENGTH,
   MAX_LIVES,
   addLeaderboardEntry,
   clearBonusEvent,
@@ -19,11 +19,11 @@ import {
   type WordRainState,
 } from '@/lib/wordRain'
 
+const LEADERBOARD_API_URL = '/api/word-rain/leaderboard'
 const INTRO_DURATION_MS = 2500
 export const BONUS_ANIMATION_MS = 900
 const BONUS_PARTICLES = 10
 const BONUS_COLORS = ['bg-accent', 'bg-pink-400', 'bg-yellow-300', 'bg-emerald-400']
-const INITIALS_LENGTH = 3
 
 // Fraction of the visible viewport (above any on-screen keyboard) the play
 // area should fill, clamped so it never gets too cramped or too tall.
@@ -84,7 +84,6 @@ export default function WordRain() {
   const [containerWidth, setContainerWidth] = useState(0)
   const [viewportHeight, setViewportHeight] = useState<number | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [leaderboardHydrated, setLeaderboardHydrated] = useState(false)
   const [initials, setInitials] = useState('')
   const [scoreSubmitted, setScoreSubmitted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -118,22 +117,17 @@ export default function WordRain() {
   }, [])
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(LEADERBOARD_STORAGE_KEY)
-    if (raw) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hydration guard: must set after mount to avoid SSR/client mismatch
-        setLeaderboard(JSON.parse(raw) as LeaderboardEntry[])
-      } catch {
-        // ignore malformed storage and start fresh
-      }
+    let cancelled = false
+    fetch(LEADERBOARD_API_URL)
+      .then((res) => (res.ok ? (res.json() as Promise<LeaderboardEntry[]>) : []))
+      .catch(() => [])
+      .then((data) => {
+        if (!cancelled) setLeaderboard(data)
+      })
+    return () => {
+      cancelled = true
     }
-    setLeaderboardHydrated(true)
   }, [])
-
-  useEffect(() => {
-    if (!leaderboardHydrated) return
-    window.localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(leaderboard))
-  }, [leaderboard, leaderboardHydrated])
 
   useEffect(() => {
     if (!showIntro) return
@@ -204,8 +198,22 @@ export default function WordRain() {
     event.preventDefault()
     const trimmed = initials.trim().toUpperCase().slice(0, INITIALS_LENGTH)
     if (!trimmed) return
-    setLeaderboard((prev) => addLeaderboardEntry(prev, { initials: trimmed, score: state.score }))
+    const entry = { initials: trimmed, score: state.score }
+    setLeaderboard((prev) => addLeaderboardEntry(prev, entry))
     setScoreSubmitted(true)
+
+    fetch(LEADERBOARD_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    })
+      .then((res) => (res.ok ? (res.json() as Promise<LeaderboardEntry[]>) : null))
+      .then((data) => {
+        if (data) setLeaderboard(data)
+      })
+      .catch(() => {
+        // keep the optimistic local update if the leaderboard couldn't be reached
+      })
   }
 
   return (

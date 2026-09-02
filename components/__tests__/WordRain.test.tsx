@@ -1,10 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import WordRain, { BonusConfetti, BONUS_ANIMATION_MS } from '../WordRain'
-import { CHAR_WIDTH_PX, WORD_HORIZONTAL_PADDING_PX, LEADERBOARD_STORAGE_KEY, type LeaderboardEntry } from '@/lib/wordRain'
+import { CHAR_WIDTH_PX, WORD_HORIZONTAL_PADDING_PX, addLeaderboardEntry, type LeaderboardEntry } from '@/lib/wordRain'
 
-function seedLeaderboard(entries: LeaderboardEntry[]) {
-  localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(entries))
+// Stubs the leaderboard API: GET returns the current in-memory board, POST
+// applies the submitted entry to it (mirroring the server's read-modify-write)
+// and returns the updated board, just like the real route handler.
+function mockLeaderboardApi(initial: LeaderboardEntry[] = []) {
+  let current = initial
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        const entry = JSON.parse(init.body as string) as LeaderboardEntry
+        current = addLeaderboardEntry(current, entry)
+      }
+      return { ok: true, json: async () => current } as Response
+    }),
+  )
 }
 
 function mockVisualViewport(initialHeight: number) {
@@ -94,12 +107,13 @@ function tick(totalMs: number, stepMs = 200) {
 describe('WordRain', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    localStorage.clear()
+    mockLeaderboardApi()
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     cleanup()
   })
 
@@ -273,27 +287,30 @@ describe('WordRain', () => {
     expect(screen.getByText('Score: 30')).toBeInTheDocument()
   })
 
-  it('prompts for initials when a finished score qualifies for the leaderboard, and saves it', () => {
+  it('prompts for initials when a finished score qualifies for the leaderboard, and saves it', async () => {
     mockFirstWordInPool()
     render(<WordRain />)
+    await act(async () => {}) // flush the initial leaderboard fetch
 
     tick(INTRO_DURATION_MS + 3 * (1500 + 4200) + 2000)
 
     const initialsInput = screen.getByLabelText(/enter your initials/i)
     fireEvent.change(initialsInput, { target: { value: 'abc' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }))
+    await act(async () => {}) // flush the submit POST
 
     expect(screen.getByText('ABC')).toBeInTheDocument()
-    const saved = JSON.parse(localStorage.getItem(LEADERBOARD_STORAGE_KEY)!)
-    expect(saved).toEqual([{ initials: 'ABC', score: 0 }])
+    expect(fetch).toHaveBeenLastCalledWith(
+      '/api/word-rain/leaderboard',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ initials: 'ABC', score: 0 }) }),
+    )
   })
 
-  it('skips the initials prompt for a score that does not qualify, but still shows the leaderboard', () => {
-    seedLeaderboard(
-      Array.from({ length: 5 }, (_, i) => ({ initials: 'AAA', score: 100 + i })),
-    )
+  it('skips the initials prompt for a score that does not qualify, but still shows the leaderboard', async () => {
+    mockLeaderboardApi(Array.from({ length: 5 }, (_, i) => ({ initials: 'AAA', score: 100 + i })))
     mockFirstWordInPool()
     render(<WordRain />)
+    await act(async () => {}) // flush the initial leaderboard fetch
 
     tick(INTRO_DURATION_MS + 3 * (1500 + 4200) + 2000)
 

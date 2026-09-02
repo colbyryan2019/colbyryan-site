@@ -4,6 +4,7 @@ import About from '@/components/About'
 import Experience from '@/components/Experience'
 import Education from '@/components/Education'
 import Projects from '@/components/Projects'
+import { contact } from '@/lib/content'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -20,6 +21,16 @@ export default function AboutPage() {
       <Experience />
       <Education />
       <Projects />
+      <section className="fade-in-section flex justify-center">
+        <a
+          href={contact.resumeHref}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-full border border-accent bg-accent px-8 py-3 text-base font-semibold text-gray-950 transition-colors hover:bg-transparent hover:text-accent"
+        >
+          Resume
+        </a>
+      </section>
     </div>
   )
 }
