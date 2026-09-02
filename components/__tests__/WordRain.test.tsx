@@ -287,6 +287,46 @@ describe('WordRain', () => {
     expect(screen.getByText('Score: 30')).toBeInTheDocument()
   })
 
+  it('does not let the keystroke that finishes one word also start a different word sharing that letter', async () => {
+    // First spawn: 'cat' (0.001 always draws the words pool, index 0, at
+    // this difficulty). Second spawn: the lone letter 't' - chosen because
+    // it's also 'cat's last letter, reproducing the exact overlap. A
+    // constant mock (rather than a per-call sequence) keeps this immune to
+    // any incidental extra Math.random() calls React itself makes.
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.001)
+    render(<WordRain />)
+    await act(async () => {}) // flush the initial leaderboard fetch
+    dismissIntro()
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+
+    randomSpy.mockReturnValue(0.75) // draws the letters pool, index 19 -> 't'
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+
+    expect(screen.getByLabelText('Falling word cat')).toBeInTheDocument()
+    expect(screen.getByLabelText('Falling word t')).toBeInTheDocument()
+
+    // A real browser fires both the window keydown listener and the
+    // tap-focused hidden input's onChange for every physical keystroke once
+    // that input has focus - which happens as soon as a player taps/clicks
+    // the play area.
+    const hiddenInput = screen.getByLabelText('Type the falling words')
+    hiddenInput.focus()
+    for (const char of 'cat') {
+      fireEvent.keyDown(window, { key: char })
+      fireEvent.change(hiddenInput, { target: { value: char } })
+    }
+
+    // Only 'cat' should be completed - the lone 't' must still be falling,
+    // untouched by the second (duplicate) dispatch of that same keystroke.
+    expect(screen.queryByLabelText('Falling word cat')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Falling word t')).toBeInTheDocument()
+    expect(screen.getByText('Score: 30')).toBeInTheDocument()
+  })
+
   it('prompts for initials when a finished score qualifies for the leaderboard, and saves it', async () => {
     mockFirstWordInPool()
     render(<WordRain />)

@@ -145,7 +145,15 @@ export default function WordRain() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key.length === 1) dispatch({ type: 'type', char: event.key })
+      if (event.key.length !== 1) return
+      // While the hidden input has focus (the tap-to-focus target below),
+      // its onChange already dispatches this same keystroke - skip here to
+      // avoid double-dispatching it. Otherwise a keystroke that completes a
+      // word gets applied a second time against the post-completion state,
+      // which can auto-start (or, for a single falling letter, instantly
+      // finish) any other word that happens to start with that same letter.
+      if (document.activeElement === hiddenInputRef.current) return
+      dispatch({ type: 'type', char: event.key })
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
