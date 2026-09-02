@@ -3,7 +3,6 @@ export interface ContactInfo {
   title: string
   location: string
   email: string
-  phone: string
   github: string
   linkedin: string
   resumeHref: string
@@ -14,7 +13,6 @@ export const contact: ContactInfo = {
   title: 'Software Engineer',
   location: 'New York City, NY',
   email: 'colbyryan2019@gmail.com',
-  phone: '(508) 330-8410',
   github: 'https://github.com/colbyryan2019',
   linkedin: 'https://www.linkedin.com/in/colby-ryan/',
   resumeHref: '/resume/Colby_Ryan_Resume.pdf',

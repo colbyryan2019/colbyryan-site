@@ -23,13 +23,6 @@ export default function AboutIntro() {
           <a href={`mailto:${contact.email}`} className="transition-colors hover:text-accent">
             {contact.email}
           </a>
-          <span>·</span>
-          <a
-            href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`}
-            className="transition-colors hover:text-accent"
-          >
-            {contact.phone}
-          </a>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
           <Link
