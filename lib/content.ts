@@ -105,6 +105,11 @@ export interface GameEntry {
 
 export const games: GameEntry[] = [
   {
+    title: 'Colbordle',
+    description: 'Guess the secret word in six tries.',
+    href: '/games/colbordle',
+  },
+  {
     title: 'Bubble Burst',
     description: 'Pop the rising bubbles before they float away.',
     href: '/games/bubble-burst',
@@ -113,11 +118,6 @@ export const games: GameEntry[] = [
     title: 'Word Rain',
     description: 'Type the falling words before they hit the bottom. Three lives, and it gets faster as you go.',
     href: '/games/word-rain',
-  },
-  {
-    title: 'Colbordle',
-    description: 'Guess the secret word in six tries.',
-    href: '/games/colbordle',
   },
 ]
 
